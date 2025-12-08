@@ -1,0 +1,248 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    WeatherPane CARDS QUICK REFERENCE                       ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+TOTAL CARDS: 13 (9 Today + 4 Tomorrow)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TODAY CARDS (No Tomorrow Versions)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SOLAR NOON
+   ID:        #solarNoonCard
+   data-card: solarNoon
+   Badge:     None
+   Details:   Altitude, Azimuth, Offset, Daylight fraction
+
+2. SUNSET
+   ID:        #sunsetCard
+   data-card: sunset
+   Badge:     None
+   Details:   Civil/Nautical/Astronomical dusk, Golden hour
+
+3. NIGHT START
+   ID:        #nightCard
+   data-card: night
+   Badge:     None
+   Details:   Astronomical times, Moon overlap
+
+4. MOON
+   ID:        #moonCard
+   data-card: moon
+   Badge:     YES - Chevron (reveals test slider)
+   Details:   Illumination, Phase angle, Altitude, Distance
+   Special:   SVG visualization, Interactive phase slider
+
+5. ASTRONOMICAL EVENTS
+   ID:        #astronomicalEventsCard
+   data-card: astronomicalEvents
+   Badge:     None
+   Details:   Event type, Date/time, Visibility, Next event
+
+6. DAYLIGHT
+   ID:        #dayProgressCard
+   data-card: daylight
+   Badge:     None
+   Details:   Progress bar, Dawn/Dusk times, Golden hour, Hours above horizon
+
+7. SEASON
+   ID:        #seasonCard
+   data-card: season
+   Badge:     None
+   Details:   Next event, Days until, Event date, Hemisphere
+   Special:   Season icon, Custom styling
+
+8. SUNRISE (TODAY)
+   ID:        #sunriseCard
+   data-card: sunrise
+   Badge:     None
+   Details:   Civil/Nautical/Astronomical dawn, Golden hour starts
+
+9. WEATHER (CURRENT)
+   ID:        #currentWeatherCard
+   data-card: currentWeather
+   Badge:     YES - F/C Toggle (°C)
+   Details:   Conditions, Wind, Humidity, Feels like
+   Special:   Updates all temp displays on toggle
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CARDS WITH TOMORROW VERSIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SUNRISE PAIR:
+  Today:     #sunriseCard         (data-card: sunrise)
+  Tomorrow:  #sunriseTomorrowCard (data-card: sunriseTomorrow)
+  Badge:     None
+
+SUNSET PAIR:
+  Today:     #sunsetCard         (data-card: sunset)
+  Tomorrow:  #sunsetTomorrowCard (data-card: sunsetTomorrow)
+  Badge:     None
+
+NIGHT START PAIR:
+  Today:     #nightCard         (data-card: night)
+  Tomorrow:  #nightTomorrowCard (data-card: nightTomorrow)
+  Badge:     None
+
+WEATHER PAIR:
+  Today:     #currentWeatherCard  (data-card: currentWeather)
+  Tomorrow:  #weatherTomorrowCard (data-card: weatherTomorrow)
+  Badge:     YES - F/C Toggle (updates both cards)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOGGLE BADGES INVENTORY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TEMPERATURE UNIT BADGE (F/C Toggle)
+  Type:        Text toggle
+  Location:    Top-right of weather cards
+  Cards:       #currentWeatherCard, #weatherTomorrowCard
+  Badge IDs:   #tempUnitBadge, #tempUnitBadgeTomorrow
+  Default:     °C
+  Toggles:     C ↔ F
+  Effect:      Updates all temperature displays + feels-like
+  Handler:     grid.js lines 360-387
+  Function:    toggleTemperatureUnit() in weather.js
+  CSS:         style.css lines 299-342
+  Storage:     localStorage['weatherPane:tempUnit']
+  Animation:   Scale (0.95) on click
+
+MOON PHASE SLIDER BADGE (Chevron Toggle)
+  Type:        Icon toggle (chevron)
+  Location:    Top-right of moon card
+  Card:        #moonCard
+  Badge ID:    #moonTestBadge
+  Icon:        Font Awesome chevron-down/up
+  Action:      Reveals/hides phase test slider
+  Handler:     grid.js lines 235-261
+  CSS Classes: .moon-test-active, .moon-test-slider
+  CSS:         card_special.css lines 27-48
+  Storage:     Card CSS class only (not persistent)
+  Effect:      Shows slider → allows testing moon phases
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CARD EXPANSION SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+All cards are expandable (click to reveal detail section)
+
+Expansion Classes:
+  .expanded          - Applied to clicked card (shows detail)
+  .card-dimmed       - Applied to other cards (blur + fade)
+  .card-expanded     - Applied to body (indicates expansion active)
+
+Expansion Handler:
+  Function:  applyCardExpansion() in grid.js (lines 73-155)
+  Trigger:   Card click (not on badge)
+  Effect:    Detail appears below card, others get blur + desaturate
+  Close:     Click card again, click outside, or press Escape
+
+Animations:
+  Card detail fade-in:    0.22s
+  Card detail slide-up:   0.3s
+  Distance-based blur:    Dynamic based on proximity
+  Muuri layout refresh:   350ms delay
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KEY FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HTML Structure:
+  /index.html (lines 192-637)
+
+Card Interaction:
+  /js/grid.js - Card handlers, badge clicks, expand/collapse, drag-drop
+
+Data & Display:
+  /js/main.js - Fetch APIs, populate card data
+  /js/weather.js - Temperature unit toggle, conversions
+
+Styling:
+  /css/style.css - Card base, badges, expansion, animations
+  /css/card_special.css - Moon card, season card specifics
+
+Settings & Visibility:
+  /js/settings.js - Card visibility, theme, backgrounds
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CARD DOM STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━━━━━━
+
+<article class="card" id="[UNIQUE_ID]" data-card="[TYPE]" 
+         tabindex="0" role="button" aria-expanded="false">
+         
+    <!-- Optional badge -->
+    <span class="status-badge" id="[BADGE_ID]">[BADGE_TEXT]</span>
+    
+    <!-- Always visible summary -->
+    <div class="card-summary">
+        <h3>[Title]</h3>
+        <div class="row">
+            <div class="metric">
+                <span class="value" id="[VALUE_ID]">—</span>
+                <small>[UNIT]</small>
+            </div>
+            <span class="pill" id="[PILL_ID]">—</span>
+        </div>
+        <div class="kicker" id="[KICKER_ID]">—</div>
+    </div>
+    
+    <!-- Expanded detail (shown on click) -->
+    <div class="card-detail">
+        <div class="detail-grid">
+            <div>
+                <span class="detail-label">Label</span>
+                <span class="detail-value" id="[ID]">—</span>
+            </div>
+            <!-- More details... -->
+        </div>
+    </div>
+    
+    <!-- Special content (e.g., moon slider) -->
+    <div class="moon-test-slider" id="[SPECIAL_ID]">...</div>
+</article>
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMMON ID PATTERNS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Today value:       [name]        (e.g., #sunset, #temp)
+Tomorrow value:    [name]Tomorrow (e.g., #sunsetTomorrow, #tempTomorrow)
+
+Today detail:      [name][Detail] (e.g., #sunsetCivilDusk)
+Tomorrow detail:   [name]Tomorrow[Detail] (e.g., #sunsetTomorrowCivilDusk)
+
+Examples:
+  Sunset today:      #sunset          → #sunsetCard contains it
+  Sunset tomorrow:   #sunsetTomorrow  → #sunsetTomorrowCard contains it
+  Dusk today:        #sunsetCivilDusk
+  Dusk tomorrow:     #sunsetTomorrowCivilDusk
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EDIT MODE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Triggered:     Click edit button in header
+Active Class:  body.edit-mode-active
+Features:      
+  - Cards become draggable
+  - Cards blink with random delays
+  - Delete badges appear (−)
+  - Card order saved to localStorage
+  - Click delete badge to hide card
+
+Handler:       toggleEditMode() in grid.js (lines 172-221)
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         See documentation files:                           ║
+║  - CARD_ANALYSIS.md          (Comprehensive card reference)                ║
+║  - BADGE_IMPLEMENTATION_GUIDE.md (How to add new badges)                   ║
+╚════════════════════════════════════════════════════════════════════════════╝

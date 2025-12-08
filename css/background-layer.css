@@ -1,0 +1,81 @@
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(1200px 700px at 50% -200px, #162a44, transparent);
+    pointer-events: none;
+    z-index: 0;
+}
+
+#cloudLayer {
+    position: fixed;
+    top: -20vh;
+    right: -10vw;
+    width: 120vw;
+    height: 120vh;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.33;
+    mix-blend-mode: screen;
+    /* filter: saturate(110%); */
+    mask-image: radial-gradient(300% 260% at 70% 12%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.72) 38%, rgba(255, 255, 255, 0.28) 64%, rgba(255, 255, 255, 0.08) 86%, transparent 100%);
+    -webkit-mask-image: radial-gradient(300% 260% at 70% 12%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.72) 38%, rgba(255, 255, 255, 0.28) 64%, rgba(255, 255, 255, 0.08) 86%, transparent 100%);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: scale(1);
+}
+
+:root[data-theme-mode="light"] #cloudLayer,
+body[data-theme-mode="light"] #cloudLayer {
+    mix-blend-mode: normal;
+    opacity: 0.48;
+    filter: saturate(115%);
+}
+
+:root[data-theme-mode="light"] #cloudLayer.sunny,
+body[data-theme-mode="light"] #cloudLayer.sunny {
+    opacity: 0.65;
+}
+
+:root[data-theme-mode="light"] #cloudLayer.sunny.paused,
+body[data-theme-mode="light"] #cloudLayer.sunny.paused {
+    opacity: 0.36;
+}
+
+:root[data-theme-mode="light"] #cloudLayer.paused,
+body[data-theme-mode="light"] #cloudLayer.paused {
+    opacity: 0.28;
+}
+
+#cloudLayer canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#cloudLayer.hiding {
+    opacity: 0;
+    transform: scale(1.05);
+}
+
+#cloudLayer.sunny {
+    opacity: 0.5;
+}
+
+#cloudLayer.sunny.paused {
+    opacity: 0.26;
+}
+
+#cloudLayer.paused {
+    opacity: 0.18;
+}
+
+#cloudLayer .cloud-scene-surface {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}

@@ -1,0 +1,482 @@
+/* Muuri item wrapper */
+.grid .muuri-item {
+    position: absolute;
+    display: block;
+    margin: 8px;
+    /* Creates 16px gap between items (8px + 8px) */
+    z-index: 1;
+    width: calc(50% - 16px);
+    /* Account for left + right margin */
+}
+
+.grid .muuri-item.muuri-item-dragging {
+    z-index: 3;
+}
+
+.grid .muuri-item.muuri-item-releasing {
+    z-index: 2;
+}
+
+.grid .muuri-item.muuri-item-hidden {
+    z-index: 0;
+}
+
+/* Allow card-dimmed to work within muuri-item */
+.grid .muuri-item:has(.card-dimmed) {
+    z-index: 10 !important;
+}
+
+@media (max-width: 960px) {
+    .grid .muuri-item {
+        width: calc(100% - 16px);
+        /* Single column on tablet/mobile, accounting for margins */
+    }
+}
+
+@media (max-width: 760px) {
+    .card-detail {
+        left: -12px;
+        right: -12px;
+    }
+}
+
+.card {
+    --card-surface: linear-gradient(180deg, rgba(255, 255, 255, .03), rgba(255, 255, 255, .01));
+    --card-fg: var(--text);
+    --card-muted: var(--muted);
+    --card-sub-bg: #0b1c2f;
+    --card-sub-border: var(--line);
+    background: var(--card-surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(3px) saturate(2);
+    padding: 14px 16px;
+    position: relative;
+    overflow: visible;
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        filter 0.3s ease,
+        opacity 0.3s ease;
+    color: var(--card-fg);
+    margin: 0;
+    cursor: pointer;
+    outline: none;
+    z-index: 1;
+}
+
+.card:hover,
+.card.expanded {
+    --card-surface: linear-gradient(180deg,
+            color-mix(in srgb, var(--card) 5%, var(--hover-light) 82%),
+            color-mix(in srgb, var(--card) 24%, var(--hover-mid) 66%));
+    --card-fg: var(--hover-text);
+    --card-muted: var(--hover-muted);
+    --card-sub-bg: color-mix(in srgb, var(--card) 40%, var(--hover-light) 60%);
+    --card-sub-border: color-mix(in srgb, var(--hover-text) 28%, transparent 72%);
+    border-color: color-mix(in srgb, var(--hover-muted) 40%, var(--hover-light) 60%);
+    box-shadow: 0 18px 38px rgba(8, 18, 32, 0.28);
+}
+
+/* Reset card hover effect when badge is hovered */
+.card:hover:has(.status-badge:hover) {
+    --card-surface: linear-gradient(180deg, rgba(255, 255, 255, .03), rgba(255, 255, 255, .01));
+    --card-fg: var(--text);
+    --card-muted: var(--muted);
+    --card-sub-bg: color-mix(in srgb, var(--bg) 60%, var(--card) 40%);
+    --card-sub-border: var(--line);
+    border-color: var(--line);
+    box-shadow: var(--shadow);
+}
+
+.card.animate-click {
+    transform: scale(0.95);
+}
+
+.card:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent 55%), 0 18px 38px rgba(8, 18, 32, 0.32);
+}
+
+.card .status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: color-mix(in srgb, var(--text) 50%, transparent 50%);
+    background: color-mix(in srgb, var(--text) 8%, transparent 92%);
+    border: 1px solid color-mix(in srgb, var(--text) 12%, transparent 88%);
+    padding: 3px 7px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    pointer-events: auto;
+    user-select: none;
+    transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.card:hover .status-badge,
+.card.expanded .status-badge {
+    color: var(--hover-text);
+    background: color-mix(in srgb, var(--hover-text) 8%, transparent 92%);
+    border-color: color-mix(in srgb, var(--hover-text) 16%, transparent 84%);
+}
+
+.card .status-badge:hover {
+    background: color-mix(in srgb, var(--text) 12%, transparent 88%);
+    border-color: color-mix(in srgb, var(--text) 20%, transparent 80%);
+    color: color-mix(in srgb, var(--text) 70%, transparent 30%);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent 70%);
+}
+
+/* Position day toggle badge on right side */
+.card .status-badge.day-toggle-badge {
+    right: 12px;
+}
+
+/* Stack temp unit badge below day toggle badge on weather card */
+#currentWeatherCard .status-badge.temp-unit-badge {
+    top: 44px;
+    right: 12px;
+}
+
+.card:hover .status-badge:hover,
+.card.expanded .status-badge:hover {
+    background: color-mix(in srgb, var(--text) 12%, transparent 88%);
+    border-color: color-mix(in srgb, var(--text) 20%, transparent 80%);
+    color: color-mix(in srgb, var(--text) 70%, transparent 30%);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 40%, transparent 60%);
+}
+
+.card .status-badge:active {
+    transform: scale(0.95);
+}
+
+.card-summary {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.card-detail {
+    position: absolute;
+    left: -18px;
+    right: -18px;
+    top: calc(100% + 16px);
+    background: linear-gradient(180deg,
+            color-mix(in srgb, var(--card) 12%, var(--hover-light) 88%),
+            color-mix(in srgb, var(--card) 22%, var(--hover-mid) 78%));
+    border: 1px solid color-mix(in srgb, var(--hover-muted) 40%, var(--hover-light) 60%);
+    box-shadow: 0 24px 48px rgba(8, 18, 32, 0.35);
+    border-radius: calc(var(--radius) + 6px);
+    backdrop-filter: blur(10px);
+    padding: 20px 22px 22px;
+    opacity: 0;
+    transform: translateY(-12px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.3s ease, visibility 0s linear 0.25s;
+    max-height: min(60vh, 520px);
+    overflow-y: auto;
+    z-index: 600;
+}
+
+.card.expanded .card-detail {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 0.22s ease, transform 0.3s ease;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.detail-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--card-muted, var(--muted)) 90%, rgba(255, 255, 255, 0.82) 10%);
+    margin-bottom: 4px;
+}
+
+.detail-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--card-fg);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.card-dimmed {
+    filter: blur(2px) saturate(80%);
+    opacity: 0.35;
+    transform: scale(0.92) translateY(8px);
+    pointer-events: none;
+    transition: filter 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+        opacity 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+        transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 10;
+}
+
+.card-dimmed .status-badge {
+    opacity: 0;
+}
+
+.card.expanded {
+    z-index: 80;
+    transform: translateY(-6px) scale(1.02);
+    pointer-events: auto;
+    /* Keep expanded card non-draggable but clickable */
+}
+
+/* Disable dragging on expanded and dimmed cards */
+.muuri-item:has(.card.expanded),
+.muuri-item:has(.card-dimmed) {
+    pointer-events: none !important;
+}
+
+/* But allow clicking on the expanded card itself */
+.card.expanded {
+    pointer-events: auto;
+}
+
+/* Drag and drop states */
+.muuri-item-dragging {
+    z-index: 9999 !important;
+}
+
+/* Disable ALL transitions on dragging cards - this must have high specificity */
+.grid .muuri-item-dragging .card,
+.grid .muuri-item-dragging .card *,
+.grid .muuri-item-dragging.muuri-item .card {
+    transition: none !important;
+    animation: none !important;
+}
+
+.muuri-item-dragging .card {
+    cursor: grabbing !important;
+    transform: scale(1.05) rotate(2deg) !important;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5) !important;
+    opacity: 0.9;
+}
+
+.muuri-item-releasing .card {
+    /* Only animate on release, not during drag */
+    transition: transform 0.4s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.2, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.2, 0, 0.2, 1) !important;
+}
+
+.muuri-item-placeholder {
+    opacity: 0.5;
+    background: color-mix(in srgb, var(--accent) 15%, transparent 85%);
+    border: 2px dashed var(--accent);
+    border-radius: var(--radius);
+    z-index: 1;
+}
+
+.card {
+    cursor: pointer;
+}
+
+.card:active {
+    cursor: pointer;
+}
+
+/* Edit mode styles */
+.edit-mode-active .card {
+    cursor: grab !important;
+}
+
+.edit-mode-active .card:active {
+    cursor: grabbing !important;
+}
+
+/* Blink animation for edit mode */
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.card.blinking {
+    animation: blink 1.2s ease-in-out infinite;
+}
+
+/* Delete badge */
+.card-delete-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ff3b3b;
+    border: 2px solid var(--bg);
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(255, 59, 59, 0.4);
+    transition: all 0.2s ease;
+}
+
+.edit-mode-active .card-delete-badge {
+    display: flex;
+}
+
+.card-delete-badge:hover {
+    background: #ff1f1f;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(255, 59, 59, 0.6);
+}
+
+.card-delete-badge:active {
+    transform: scale(0.95);
+}
+
+.card h3 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--card-muted, var(--muted));
+    transition: color 0.2s ease;
+    pointer-events: none;
+}
+
+.metric {
+    display: flex;
+    align-items: baseline;
+    gap: 8px
+}
+
+.metric .value {
+    font-size: 28px;
+    font-weight: 600
+}
+
+.metric small {
+    color: var(--card-muted, var(--muted));
+    transition: color 0.2s ease;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px
+}
+
+.pill {
+    font-size: 12px;
+    color: #001527;
+    background: var(--accent);
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    transition: box-shadow 0.2s ease;
+}
+
+.card:hover .pill {
+    box-shadow: 0 4px 8px rgba(9, 21, 36, 0.25);
+}
+
+.kicker {
+    font-size: 12px;
+    color: var(--card-muted, var(--muted));
+    transition: color 0.2s ease;
+}
+
+.bar {
+    height: 12px;
+    background: linear-gradient(90deg,
+            #2d1b4e 0%,
+            /* deep purple/night - left edge */
+            #1e3a5a 15%,
+            /* dark blue - early morning */
+            #ff9a56 25%,
+            /* orange - sunrise */
+            #ffd89b 35%,
+            /* yellow - morning */
+            #87ceeb 50%,
+            /* light blue - noon/center */
+            #ffd89b 65%,
+            /* yellow - afternoon */
+            #ff9a56 75%,
+            /* orange - sunset */
+            #1e3a5a 85%,
+            /* dark blue - dusk */
+            #2d1b4e 100%
+            /* deep purple/night - right edge */
+        );
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    position: relative;
+    overflow: visible;
+    transition: box-shadow 0.2s ease;
+}
+
+.bar>.fill {
+    display: none;
+}
+
+/* Red dot indicator */
+.bar::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: var(--sun-position, 50%);
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: #ff3b3b;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255, 59, 59, 0.6);
+    transition: left 0.3s ease, box-shadow 0.2s ease;
+}
+
+.card:hover .bar::after {
+    box-shadow: 0 0 12px rgba(255, 59, 59, 0.75), 0 4px 10px rgba(9, 21, 36, 0.25);
+}
+
+.card:hover .bar {
+    box-shadow: 0 4px 12px rgba(9, 21, 36, 0.2);
+}
+
+/*  */
+
+.stack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px
+}
+
+.sub {
+    background: var(--card-sub-bg);
+    border: 1px solid var(--card-sub-border);
+    border-radius: 12px;
+    padding: 8px 10px;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover .sub {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 14px rgba(9, 21, 36, 0.18);
+}
