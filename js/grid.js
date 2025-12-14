@@ -11,6 +11,7 @@ let detailOverlayState = { placeholder: null, cardId: null };
 
 // Moon test mode
 window.lastMoonData = null;
+window.initialMoonSliderValue = 50; // Track the initial slider position
 
 function updateMoonIcon(phase, fraction) {
     updateMoonSVG(phase, fraction);
@@ -69,6 +70,11 @@ function applyCardVisibility() {
     if (itemsToShow.length > 0) {
         muuriGrid.show(itemsToShow, { instant: false });
     }
+
+    // Recalculate container sizing after visibility changes
+    setTimeout(() => {
+        adjustGridContainerWidth();
+    }, 350); // wait for animations to finish
 }
 
 function restoreDetailToCard() {
@@ -135,7 +141,7 @@ function applyCardExpansion(newId) {
         }
     }
 
-    const $cards = $('.card');
+    const $cards = $('#todayGrid .card');
     const totalCards = $cards.length;
 
     $cards.each(function () {
@@ -193,7 +199,7 @@ function toggleEditMode() {
         console.log('[Grid] Dragging ENABLED (edit mode active)');
 
         // Add blink animation to visible cards with random delays
-        $('.card').each(function () {
+        $('#todayGrid .card').each(function () {
             const $card = $(this);
             const $item = $card.closest('.muuri-item');
             if (!$item.hasClass('muuri-item-hidden')) {
@@ -205,7 +211,7 @@ function toggleEditMode() {
         });
 
         // Add delete badges to all cards
-        $('.card').each(function () {
+        $('#todayGrid .card').each(function () {
             const $card = $(this);
             if (!$card.find('.card-delete-badge').length) {
                 const $badge = $('<div class="card-delete-badge">−</div>');
@@ -224,7 +230,7 @@ function toggleEditMode() {
         console.log('[Grid] Dragging DISABLED (edit mode inactive)');
 
         // Remove blink animation and reset delays
-        $('.card').each(function () {
+        $('#todayGrid .card').each(function () {
             $(this).removeClass('blinking').css('animation-delay', '');
         });
     }
@@ -235,6 +241,7 @@ function toggleEditMode() {
 // Initialize card interaction handlers
 function initCardHandlers() {
     const $panel = $('#panel');
+    const $todayGrid = $('#todayGrid');
 
     applyCardExpansion(null);
 
@@ -243,18 +250,30 @@ function initCardHandlers() {
         toggleEditMode();
     });
 
-    // Moon test badge click handler (must be before card click handler)
-    $panel.on('click', '.moon-test-badge', function (e) {
+    // Moon test button click handler (must be before card click handler)
+    $todayGrid.on('click', '#moonTestBtn', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[Moon] Badge clicked');
+        console.log('[Moon] Test button clicked');
         const $card = $(this).closest('.card');
-        const $icon = $(this).find('i');
+        const $btn = $(this);
+        const $icon = $btn.find('i');
+
         $card.toggleClass('moon-test-active');
 
-        // Toggle chevron icon
+        // Toggle active state and icon
+        $btn.toggleClass('active');
+
         if ($card.hasClass('moon-test-active')) {
             $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+            // Store initial slider value when opening
+            if (window.lastMoonData) {
+                const phase = window.lastMoonData.phase;
+                window.initialMoonSliderValue = Math.round(phase * 100);
+                $('#moonPhaseSlider').val(window.initialMoonSliderValue);
+            }
+            // Hide reset button initially
+            $('#moonResetBtn').hide();
         } else {
             $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
             // Reset to live moon data
@@ -272,10 +291,14 @@ function initCardHandlers() {
         }
     });
 
-    $panel.on('click', '.card', function (e) {
-        // Check if click is on or within a badge
+    $todayGrid.on('click', '.card', function (e) {
+        // Check if click is on or within a badge or control button
         if ($(e.target).hasClass('status-badge') || $(e.target).closest('.status-badge').length) {
             console.log('[Card] Click ignored - badge clicked');
+            return;
+        }
+        if ($(e.target).hasClass('control-btn') || $(e.target).closest('.control-btn').length) {
+            console.log('[Card] Click ignored - control button clicked');
             return;
         }
         if ($(e.target).closest('.card-delete-badge').length) return;
@@ -295,9 +318,17 @@ function initCardHandlers() {
     });
 
     // Moon phase slider handler
-    $('#moonPhaseSlider').on('input', function () {
+    $panel.on('input', '#moonPhaseSlider', function () {
         const sliderValue = parseInt($(this).val());
         const illumination = sliderValue / 100;
+
+        // Show/hide reset button based on whether slider has moved from initial value
+        const hasMoved = sliderValue !== window.initialMoonSliderValue;
+        if (hasMoved) {
+            $('#moonResetBtn').fadeIn(200);
+        } else {
+            $('#moonResetBtn').fadeOut(200);
+        }
 
         // Map slider to phase cycle (0-100 = 0.0-1.0)
         // 0 = New Moon (waxing start)
@@ -349,7 +380,39 @@ function initCardHandlers() {
         }
     });
 
-    $panel.on('keydown', '.card', function (e) {
+    // Moon reset button handler
+    $panel.on('click', '#moonResetBtn', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[Moon] Reset button clicked');
+
+        // Reset slider to initial value
+        $('#moonPhaseSlider').val(window.initialMoonSliderValue);
+
+        // Hide reset button
+        $(this).fadeOut(200);
+
+        // Restore live moon data
+        if (window.lastMoonData) {
+            updateMoonIcon(window.lastMoonData.phase, window.lastMoonData.fraction);
+
+            // Update labels
+            const phaseName = moonLabel(window.lastMoonData.phase);
+            $('#moonSliderPhaseName').text(phaseName);
+            $('#moonSliderValue').text(`${Math.round(window.lastMoonData.fraction * 100)}%`);
+            $('#moonSliderNext').text('Next occurs: Now (current phase)');
+        }
+
+        // Refresh Muuri grid to recalculate card sizes
+        if (muuriGrid) {
+            setTimeout(() => {
+                muuriGrid.refreshItems();
+                muuriGrid.layout();
+            }, 350);
+        }
+    });
+
+    $todayGrid.on('keydown', '.card', function (e) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             toggleCard($(this));
@@ -363,7 +426,7 @@ function initCardHandlers() {
     });
 
     $(document).on('click', function (e) {
-        const clickedCard = $(e.target).closest('.card').length;
+        const clickedCard = $(e.target).closest('#todayGrid .card').length;
         const clickedOverlay = $(e.target).closest('#sunDetailOverlay').length;
         if (expandedCardId && !clickedCard && !clickedOverlay) {
             applyCardExpansion(null);
@@ -374,9 +437,20 @@ function initCardHandlers() {
         applyCardExpansion(null);
     });
 
-    // Set up temperature toggle click handler on badge (using event delegation)
-    $panel.on('click', '#tempUnitBadge', function (e) {
+    // Set up temperature toggle control buttons (using event delegation)
+    $panel.on('click', '#tempCelsiusBtn, #tempFahrenheitBtn', function (e) {
         e.stopPropagation(); // Prevent card click events
+
+        const $btn = $(this);
+        const value = $btn.data('value');
+        const $group = $btn.closest('.control-group');
+
+        // Don't do anything if already active
+        if ($btn.hasClass('active')) return;
+
+        // Toggle active state
+        $group.find('.control-btn').removeClass('active');
+        $btn.addClass('active');
 
         // Animate the card
         const $card = $('#currentWeatherCard');
@@ -386,56 +460,64 @@ function initCardHandlers() {
         }, 150);
 
         // Toggle temperature unit
-        toggleTemperatureUnit();
+        if (value === 'celsius' || value === 'fahrenheit') {
+            toggleTemperatureUnit();
+        }
+
+        // Refresh Muuri grid to recalculate card sizes
+        if (muuriGrid) {
+            setTimeout(() => {
+                muuriGrid.refreshItems();
+                muuriGrid.layout();
+            }, 350);
+        }
     });
 
-    // Set up day toggle badges for Sunrise, Sunset, Night, and Weather cards (using event delegation)
-    $panel.on('click', '#sunriseDayBadge', function (e) {
+    // Set up day toggle control buttons for Sunrise, Sunset, Night, and Weather cards (using event delegation)
+    $panel.on('click', '.control-btn[data-value="today"], .control-btn[data-value="tomorrow"]', function (e) {
         e.stopPropagation();
-        toggleDayView('sunrise', $('#sunriseCard'));
-    });
 
-    $panel.on('click', '#sunsetDayBadge', function (e) {
-        e.stopPropagation();
-        toggleDayView('sunset', $('#sunsetCard'));
-    });
+        const $btn = $(this);
+        const value = $btn.data('value');
+        const cardType = $btn.data('card');
+        const $group = $btn.closest('.control-group');
+        const $card = $btn.closest('.card');
 
-    $panel.on('click', '#nightDayBadge', function (e) {
-        e.stopPropagation();
-        toggleDayView('night', $('#nightCard'));
-    });
+        // Don't do anything if already active
+        if ($btn.hasClass('active')) return;
 
-    $panel.on('click', '#weatherDayBadge', function (e) {
-        e.stopPropagation();
-        toggleDayView('weather', $('#currentWeatherCard'));
+        // Toggle active state
+        $group.find('.control-btn').removeClass('active');
+        $btn.addClass('active');
+
+        // Call the toggle function
+        toggleDayView(cardType, $card, value);
     });
 }
 
 // Toggle between today and tomorrow view for a card
-function toggleDayView(cardType, $card) {
+function toggleDayView(cardType, $card, newState) {
+    // If newState is not provided, toggle based on current state
+    if (!newState) {
+        const currentState = localStorage.getItem(`weatherPane:${cardType}DayView`) || 'today';
+        newState = currentState === 'today' ? 'tomorrow' : 'today';
+    }
+
     // Animate the card
     $card.addClass('animate-click');
     setTimeout(() => {
         $card.removeClass('animate-click');
     }, 150);
 
-    // Get current state from localStorage (default is 'today')
-    const currentState = localStorage.getItem(`weatherPane:${cardType}DayView`) || 'today';
-    const newState = currentState === 'today' ? 'tomorrow' : 'today';
-
     // Save new state
     localStorage.setItem(`weatherPane:${cardType}DayView`, newState);
-
-    // Update badge text
-    const badgeId = `${cardType}DayBadge`;
-    $(`#${badgeId}`).text(newState === 'today' ? 'TOD' : 'TMR');
 
     // Update header text
     const headerText = {
         'sunrise': 'Sunrise',
         'sunset': 'Sunset',
         'night': 'Night Start',
-        'weather': 'Weather'
+        'currentWeather': 'Weather'
     };
     const baseHeader = headerText[cardType];
     $card.find('h3').text(newState === 'today' ? baseHeader : `${baseHeader} (Tomorrow)`);
@@ -463,29 +545,42 @@ function toggleDayView(cardType, $card) {
 
 // Initialize day view states on page load
 function initDayViewStates() {
-    const cards = ['sunrise', 'sunset', 'night', 'weather'];
+    const cards = [
+        { type: 'sunrise', id: 'sunriseCard', todayBtnId: 'sunriseTodayBtn', tomorrowBtnId: 'sunriseTomorrowBtn' },
+        { type: 'sunset', id: 'sunsetCard', todayBtnId: 'sunsetTodayBtn', tomorrowBtnId: 'sunsetTomorrowBtn' },
+        { type: 'night', id: 'nightCard', todayBtnId: 'nightTodayBtn', tomorrowBtnId: 'nightTomorrowBtn' },
+        { type: 'currentWeather', id: 'currentWeatherCard', todayBtnId: 'weatherTodayBtn', tomorrowBtnId: 'weatherTomorrowBtn' }
+    ];
     const headerText = {
         'sunrise': 'Sunrise',
         'sunset': 'Sunset',
         'night': 'Night Start',
-        'weather': 'Weather'
+        'currentWeather': 'Weather'
     };
 
-    cards.forEach(cardType => {
-        const savedState = localStorage.getItem(`weatherPane:${cardType}DayView`) || 'today';
-        const $card = $(`#${cardType === 'weather' ? 'currentWeather' : cardType}Card`);
-        const badgeId = `${cardType}DayBadge`;
+    cards.forEach(cardInfo => {
+        const savedState = localStorage.getItem(`weatherPane:${cardInfo.type}DayView`) || 'today';
+        const $card = $(`#${cardInfo.id}`);
 
-        // Set badge text
-        $(`#${badgeId}`).text(savedState === 'today' ? 'TOD' : 'TMR');
+        // Set button active states
+        const $todayBtn = $(`#${cardInfo.todayBtnId}`);
+        const $tomorrowBtn = $(`#${cardInfo.tomorrowBtnId}`);
+
+        if (savedState === 'today') {
+            $todayBtn.addClass('active');
+            $tomorrowBtn.removeClass('active');
+        } else {
+            $todayBtn.removeClass('active');
+            $tomorrowBtn.addClass('active');
+        }
 
         // Set header text
-        const baseHeader = headerText[cardType];
+        const baseHeader = headerText[cardInfo.type];
         $card.find('h3').text(savedState === 'today' ? baseHeader : `${baseHeader} (Tomorrow)`);
 
         // Set visibility
-        const todaySelector = `.${cardType}-today-data`;
-        const tomorrowSelector = `.${cardType}-tomorrow-data`;
+        const todaySelector = `.${cardInfo.type}-today-data`;
+        const tomorrowSelector = `.${cardInfo.type}-tomorrow-data`;
 
         if (savedState === 'today') {
             $card.find(todaySelector).show();
@@ -495,6 +590,16 @@ function initDayViewStates() {
             $card.find(tomorrowSelector).show();
         }
     });
+
+    // Initialize temperature unit buttons
+    const savedTempUnit = localStorage.getItem('weatherPane:tempUnit') || 'celsius';
+    if (savedTempUnit === 'celsius') {
+        $('#tempCelsiusBtn').addClass('active');
+        $('#tempFahrenheitBtn').removeClass('active');
+    } else {
+        $('#tempCelsiusBtn').removeClass('active');
+        $('#tempFahrenheitBtn').addClass('active');
+    }
 }
 
 // Initialize Muuri grid for drag-and-drop
@@ -527,7 +632,7 @@ function initMuuriGrid() {
             }
 
             const muuriOptions = {
-                items: '.card',
+                items: '.card:not(.carousel-card-content)',
                 dragEnabled: true,
                 dragSortHeuristics: {
                     sortInterval: 50,
@@ -585,6 +690,11 @@ function initMuuriGrid() {
                 localStorage.setItem('weatherPane:cardOrder', JSON.stringify(order));
                 console.log('[Muuri] Card order saved:', order);
 
+                // Recalculate container width in case layout has changed
+                setTimeout(() => {
+                    adjustGridContainerWidth();
+                }, 300);
+
                 // Clear the flag after a short delay to allow normal clicks again
                 setTimeout(() => {
                     justFinishedDragging = false;
@@ -593,6 +703,9 @@ function initMuuriGrid() {
             });
 
             console.log('[Muuri] Grid initialized with drag-and-drop');
+
+            // Ensure grid container width is adjusted (center columns)
+            adjustGridContainerWidth();
         }
     }, 100);
 
@@ -604,3 +717,78 @@ function initMuuriGrid() {
         }
     }, 5000);
 }
+
+// Adjust grid container width so cards are horizontally centered and fit the optimal column count
+function adjustGridContainerWidth() {
+    const grid = document.getElementById('todayGrid');
+    const panel = document.getElementById('panel');
+    if (!grid || !panel) return;
+
+    const styles = getComputedStyle(document.documentElement);
+    const margin = parseInt(styles.getPropertyValue('--space-2')) || 8; // left+right margin per card
+    const cardWidth = 375; // desired card width (px)
+    const minColumns = 1;
+    const maxColumns = 5;
+
+    // Calculate available width based on viewport, accounting for typical layout constraints
+    // Use viewport width minus reasonable margins/padding for the panel
+    const viewportWidth = window.innerWidth;
+    const sunVizEstimatedWidth = Math.min(600, viewportWidth * 0.4); // Sun viz typically takes up to 40% or 600px
+    const layoutPadding = 100; // Account for padding, margins, gaps in the layout
+    const availableWidth = Math.max(viewportWidth - sunVizEstimatedWidth - layoutPadding, viewportWidth * 0.5);
+
+    const cardOuter = cardWidth + margin * 2; // card width + margins
+
+    // Calculate how many columns can fit based on available width
+    let columns = Math.floor(availableWidth / cardOuter);
+
+    // Clamp to min/max constraints
+    columns = Math.max(minColumns, Math.min(maxColumns, columns));
+
+    // Compute container width based on chosen columns
+    let containerWidth = cardOuter * columns;
+
+    // Apply width and center
+    grid.style.width = containerWidth + 'px';
+    grid.style.marginLeft = 'auto';
+    grid.style.marginRight = 'auto';
+    grid.setAttribute('data-columns', String(columns));
+
+    // Update global `--maxw` to allow main/header to expand for more columns
+    (function updateMaxWidth() {
+        const docEl = document.documentElement;
+        const layoutInset = 0; // horizontal padding/margins in main layout
+        const minMax = 800; // minimum max width to avoid too narrow layout
+        const maxCap = 2200; // generous cap for very wide screens
+
+        // Calculate desired max width: container + sun viz + spacing
+        const sunVizWidth = Math.min(600, viewportWidth * 0.4);
+        const desiredMaxWidth = containerWidth + sunVizWidth + layoutInset;
+
+        // Clamp to reasonable bounds
+        const finalMaxWidth = Math.min(maxCap, Math.max(minMax, desiredMaxWidth));
+        docEl.style.setProperty('--maxw', finalMaxWidth + 'px');
+    })();
+
+    // If muuri is present, refresh layout so positions are recalculated
+    if (window.muuriGrid) {
+        window.muuriGrid.refreshItems();
+        window.muuriGrid.layout();
+    }
+}
+
+// Debounced resize handler: refresh Muuri layout when viewport changes
+(function () {
+    let resizeTimeout = null;
+    window.addEventListener('resize', function () {
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            if (muuriGrid) {
+                muuriGrid.refreshItems();
+                muuriGrid.layout();
+                adjustGridContainerWidth();
+                console.log('[Muuri] Refreshed layout after resize');
+            }
+        }, 150);
+    });
+})();

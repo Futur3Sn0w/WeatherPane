@@ -59,6 +59,121 @@ function applyTheme() {
     }
 }
 
+// Daily Brief settings management
+function getBannerLayout() {
+    return localStorage.getItem('weatherPane:bannerLayout') || 'full';
+}
+
+function setBannerLayout(layout) {
+    localStorage.setItem('weatherPane:bannerLayout', layout);
+}
+
+function getRotationInterval() {
+    return parseInt(localStorage.getItem('weatherPane:rotationInterval') || '10000', 10);
+}
+
+function setRotationInterval(interval) {
+    localStorage.setItem('weatherPane:rotationInterval', interval.toString());
+}
+
+function getProgressIndicator() {
+    return localStorage.getItem('weatherPane:progressIndicator') || 'both';
+}
+
+function setProgressIndicator(indicator) {
+    localStorage.setItem('weatherPane:progressIndicator', indicator);
+}
+
+function getEnableCarouselRotation() {
+    const value = localStorage.getItem('weatherPane:enableCarouselRotation');
+    return value === null ? true : value === 'true';
+}
+
+function setEnableCarouselRotation(enable) {
+    localStorage.setItem('weatherPane:enableCarouselRotation', enable.toString());
+}
+
+function getSummaryContentSettings() {
+    return {
+        showSolar: localStorage.getItem('weatherPane:summaryShowSolar') !== 'false',
+        showTemp: localStorage.getItem('weatherPane:summaryShowTemp') !== 'false',
+        showWeather: localStorage.getItem('weatherPane:summaryShowWeather') !== 'false',
+        showMoon: localStorage.getItem('weatherPane:summaryShowMoon') !== 'false'
+    };
+}
+
+function setSummaryContentSetting(key, value) {
+    localStorage.setItem(`weatherPane:summary${key}`, value.toString());
+}
+
+function applyBannerSettings() {
+    const layout = getBannerLayout();
+    const progressIndicator = getProgressIndicator();
+    const enableRotation = getEnableCarouselRotation();
+
+    // Apply layout classes to banner
+    const $splitBanner = $('.split-banner');
+    $splitBanner.removeClass('layout-full layout-summary-only layout-carousel-only');
+
+    if (layout === 'summaryOnly') {
+        $splitBanner.addClass('layout-summary-only');
+    } else if (layout === 'carouselOnly') {
+        $splitBanner.addClass('layout-carousel-only');
+    } else {
+        $splitBanner.addClass('layout-full');
+    }
+
+    // Apply progress indicator visibility
+    const $progressBar = $('.carousel-progress-bar');
+    const $dots = $('.carousel-dots');
+
+    if (progressIndicator === 'progress') {
+        $progressBar.removeClass('hidden');
+        $dots.addClass('hidden');
+    } else if (progressIndicator === 'dots') {
+        $progressBar.addClass('hidden');
+        $dots.removeClass('hidden');
+    } else if (progressIndicator === 'both') {
+        $progressBar.removeClass('hidden');
+        $dots.removeClass('hidden');
+    } else {
+        // none
+        $progressBar.addClass('hidden');
+        $dots.addClass('hidden');
+    }
+
+    // Update carousel rotation
+    if (window.bannerCarousel && window.bannerCarousel.isInitialized) {
+        const interval = getRotationInterval();
+        window.bannerCarousel.rotationInterval = interval;
+
+        // Enable or disable rotation
+        if (enableRotation) {
+            if (!window.bannerCarousel.intervalId) {
+                window.bannerCarousel.start();
+            } else {
+                // Restart with new interval
+                window.bannerCarousel.stop();
+                window.bannerCarousel.start();
+            }
+        } else {
+            window.bannerCarousel.stop();
+        }
+
+        // Update dots
+        if (window.bannerCarousel.updateDots) {
+            window.bannerCarousel.updateDots();
+        }
+    }
+
+    // Update summary content
+    if (window.updateBannerSummary) {
+        window.updateBannerSummary();
+    }
+
+    console.log('[Settings] Applied banner settings:', { layout, progressIndicator, enableRotation, interval: getRotationInterval() });
+}
+
 // Background preview functions
 function initBackgroundPreview() {
     const $preview = $('#backgroundPreview');
@@ -281,6 +396,23 @@ function initSettings() {
     const $settingsNavScroll = $('#settingsNavScroll');
     const $settingsNavIndicator = $('#settingsNavIndicator');
 
+    // Daily Brief settings elements
+    const $bannerLayoutFull = $('#bannerLayoutFull');
+    const $bannerLayoutSummaryOnly = $('#bannerLayoutSummaryOnly');
+    const $bannerLayoutCarouselOnly = $('#bannerLayoutCarouselOnly');
+    const $enableCarouselRotation = $('#enableCarouselRotation');
+    const $rotationSlow = $('#rotationSlow');
+    const $rotationMedium = $('#rotationMedium');
+    const $rotationFast = $('#rotationFast');
+    const $indicatorProgress = $('#indicatorProgress');
+    const $indicatorDots = $('#indicatorDots');
+    const $indicatorBoth = $('#indicatorBoth');
+    const $indicatorNone = $('#indicatorNone');
+    const $summaryShowSolar = $('#summaryShowSolar');
+    const $summaryShowTemp = $('#summaryShowTemp');
+    const $summaryShowWeather = $('#summaryShowWeather');
+    const $summaryShowMoon = $('#summaryShowMoon');
+
     if (!$settingsBtn.length || !$settingsModal.length || !$closeSettingsBtn.length ||
         !$cloudOnRadio.length || !$cloudPausedRadio.length || !$cloudOffRadio.length ||
         !$prevSceneBtn.length || !$nextSceneBtn.length ||
@@ -331,6 +463,47 @@ function initSettings() {
     } else {
         $colorBlueRadio.prop('checked', true);
     }
+
+    // Load saved Daily Brief settings
+    const savedBannerLayout = getBannerLayout();
+    if (savedBannerLayout === 'summaryOnly') {
+        $bannerLayoutSummaryOnly.prop('checked', true);
+    } else if (savedBannerLayout === 'carouselOnly') {
+        $bannerLayoutCarouselOnly.prop('checked', true);
+    } else {
+        $bannerLayoutFull.prop('checked', true);
+    }
+
+    $enableCarouselRotation.prop('checked', getEnableCarouselRotation());
+
+    const savedRotationInterval = getRotationInterval();
+    if (savedRotationInterval === 15000) {
+        $rotationSlow.prop('checked', true);
+    } else if (savedRotationInterval === 5000) {
+        $rotationFast.prop('checked', true);
+    } else {
+        $rotationMedium.prop('checked', true);
+    }
+
+    const savedProgressIndicator = getProgressIndicator();
+    if (savedProgressIndicator === 'progress') {
+        $indicatorProgress.prop('checked', true);
+    } else if (savedProgressIndicator === 'dots') {
+        $indicatorDots.prop('checked', true);
+    } else if (savedProgressIndicator === 'none') {
+        $indicatorNone.prop('checked', true);
+    } else {
+        $indicatorBoth.prop('checked', true);
+    }
+
+    const summarySettings = getSummaryContentSettings();
+    $summaryShowSolar.prop('checked', summarySettings.showSolar);
+    $summaryShowTemp.prop('checked', summarySettings.showTemp);
+    $summaryShowWeather.prop('checked', summarySettings.showWeather);
+    $summaryShowMoon.prop('checked', summarySettings.showMoon);
+
+    // Apply banner settings on page load
+    applyBannerSettings();
 
     buildSettingsNav();
 
@@ -413,6 +586,61 @@ function initSettings() {
     Object.values(colorRadios).forEach($radio => {
         $radio.on('change', handleThemeColorChange);
     });
+
+    // Handle Daily Brief banner layout changes
+    const handleBannerLayoutChange = (e) => {
+        const value = $(e.target).val();
+        setBannerLayout(value);
+        applyBannerSettings();
+    };
+
+    $bannerLayoutFull.on('change', handleBannerLayoutChange);
+    $bannerLayoutSummaryOnly.on('change', handleBannerLayoutChange);
+    $bannerLayoutCarouselOnly.on('change', handleBannerLayoutChange);
+
+    // Handle rotation interval changes
+    const handleRotationIntervalChange = (e) => {
+        const value = $(e.target).val();
+        setRotationInterval(value);
+        applyBannerSettings();
+    };
+
+    $rotationSlow.on('change', handleRotationIntervalChange);
+    $rotationMedium.on('change', handleRotationIntervalChange);
+    $rotationFast.on('change', handleRotationIntervalChange);
+
+    // Handle carousel rotation toggle
+    $enableCarouselRotation.on('change', function() {
+        const isChecked = $(this).is(':checked');
+        setEnableCarouselRotation(isChecked);
+        applyBannerSettings();
+    });
+
+    // Handle progress indicator changes
+    const handleProgressIndicatorChange = (e) => {
+        const value = $(e.target).val();
+        setProgressIndicator(value);
+        applyBannerSettings();
+    };
+
+    $indicatorProgress.on('change', handleProgressIndicatorChange);
+    $indicatorDots.on('change', handleProgressIndicatorChange);
+    $indicatorBoth.on('change', handleProgressIndicatorChange);
+    $indicatorNone.on('change', handleProgressIndicatorChange);
+
+    // Handle summary content checkboxes
+    const handleSummaryContentChange = function() {
+        const checkboxId = $(this).attr('id');
+        const isChecked = $(this).is(':checked');
+        const key = checkboxId.replace('summary', ''); // e.g., 'ShowSolar' from 'summaryShowSolar'
+        setSummaryContentSetting(key, isChecked);
+        applyBannerSettings();
+    };
+
+    $summaryShowSolar.on('change', handleSummaryContentChange);
+    $summaryShowTemp.on('change', handleSummaryContentChange);
+    $summaryShowWeather.on('change', handleSummaryContentChange);
+    $summaryShowMoon.on('change', handleSummaryContentChange);
 
     // Listen for system theme changes when in auto mode
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {

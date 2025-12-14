@@ -20,6 +20,54 @@ async function loadCardDefinitions() {
     }
 }
 
+// Render control buttons for a card
+function renderControls(controls, dataCard) {
+    let html = '<div class="card-controls">';
+
+    if (controls.type === 'multi') {
+        // Multiple control groups (e.g., day toggle + temp unit)
+        controls.groups.forEach(group => {
+            html += renderControlGroup(group, dataCard);
+        });
+    } else {
+        // Single control group
+        html += renderControlGroup(controls, dataCard);
+    }
+
+    html += '</div>';
+    return html;
+}
+
+// Render a single control group
+function renderControlGroup(group, cardDataType) {
+    let html = '';
+    const groupClass = group.type === 'segmented' ? 'control-group segmented' : 'control-group';
+
+    html += `<div class="${groupClass}">`;
+
+    group.buttons.forEach(button => {
+        const activeClass = button.active ? ' active' : '';
+        const titleAttr = button.title ? ` title="${button.title}"` : '';
+        const dataValue = button.value ? ` data-value="${button.value}"` : '';
+        const dataCardAttr = ` data-card="${cardDataType}"`;
+
+        if (button.icon) {
+            // Icon button
+            html += `<button class="control-btn icon-btn${activeClass}" id="${button.id}"${titleAttr}${dataValue}${dataCardAttr}>`;
+            html += `<i class="fa-solid fa-${button.icon}"></i>`;
+            html += `</button>`;
+        } else {
+            // Text button
+            html += `<button class="control-btn${activeClass}" id="${button.id}"${titleAttr}${dataValue}${dataCardAttr}>`;
+            html += button.text;
+            html += `</button>`;
+        }
+    });
+
+    html += '</div>';
+    return html;
+}
+
 // Render a single card from its definition
 function renderCard(cardDef) {
     let html = `<article class="card" id="${cardDef.id}" data-card="${cardDef.dataCard}" tabindex="0" role="button" aria-expanded="false">`;
@@ -36,6 +84,11 @@ function renderCard(cardDef) {
             }
         });
         html += '</div>';
+    }
+
+    // Render controls
+    if (cardDef.controls) {
+        html += renderControls(cardDef.controls, cardDef.dataCard);
     }
 
     // Render summary

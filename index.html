@@ -149,8 +149,7 @@
                                             aria-label="Previous scene">
                                             <i class="fa-solid fa-chevron-left"></i>
                                         </button>
-                                        <button class="preview-nav-btn next" id="nextSceneBtn"
-                                            aria-label="Next scene">
+                                        <button class="preview-nav-btn next" id="nextSceneBtn" aria-label="Next scene">
                                             <i class="fa-solid fa-chevron-right"></i>
                                         </button>
                                         <div class="preview-dots" id="previewDots"></div>
@@ -178,6 +177,105 @@
                                 </div>
                             </div>
                         </section>
+                        <section class="settings-panel" id="dailyBriefTab" data-tab-id="dailyBrief"
+                            data-label="Daily Brief" data-icon="fa-calendar-day">
+                            <div class="settings-panel-header">
+                                <p class="settings-panel-kicker">Banner customization</p>
+                                <h3>Daily Brief</h3>
+                                <p class="settings-panel-description">Configure what appears in the "Today at a glance"
+                                    banner.</p>
+                            </div>
+
+                            <!-- Banner Layout -->
+                            <div class="setting-item surface">
+                                <div>
+                                    <span class="setting-label">Banner Layout</span>
+                                    <span class="setting-description">Choose what to display in the banner area</span>
+                                </div>
+                                <div class="segmented-control">
+                                    <input type="radio" name="bannerLayout" id="bannerLayoutFull" value="full" checked>
+                                    <label for="bannerLayoutFull">Full</label>
+                                    <input type="radio" name="bannerLayout" id="bannerLayoutSummaryOnly"
+                                        value="summaryOnly">
+                                    <label for="bannerLayoutSummaryOnly">Summary Only</label>
+                                    <input type="radio" name="bannerLayout" id="bannerLayoutCarouselOnly"
+                                        value="carouselOnly">
+                                    <label for="bannerLayoutCarouselOnly">Carousel Only</label>
+                                </div>
+                            </div>
+
+                            <!-- Card Carousel Settings -->
+                            <div class="setting-item surface">
+                                <div>
+                                    <span class="setting-label">Card Carousel</span>
+                                    <span class="setting-description">Configure the rotating card preview behavior</span>
+                                </div>
+                                <div class="setting-group">
+                                    <div class="setting-row">
+                                        <span class="setting-row-label">Enable Rotation</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="enableCarouselRotation" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="setting-row">
+                                        <span class="setting-row-label">Rotation Speed</span>
+                                        <div class="segmented-control compact">
+                                            <input type="radio" name="rotationInterval" id="rotationSlow" value="15000">
+                                            <label for="rotationSlow">Slow</label>
+                                            <input type="radio" name="rotationInterval" id="rotationMedium" value="10000"
+                                                checked>
+                                            <label for="rotationMedium">Medium</label>
+                                            <input type="radio" name="rotationInterval" id="rotationFast" value="5000">
+                                            <label for="rotationFast">Fast</label>
+                                        </div>
+                                    </div>
+                                    <div class="setting-row">
+                                        <span class="setting-row-label">Progress Indicator</span>
+                                        <div class="segmented-control compact">
+                                            <input type="radio" name="progressIndicator" id="indicatorProgress"
+                                                value="progress">
+                                            <label for="indicatorProgress">Bar</label>
+                                            <input type="radio" name="progressIndicator" id="indicatorDots" value="dots">
+                                            <label for="indicatorDots">Dots</label>
+                                            <input type="radio" name="progressIndicator" id="indicatorBoth" value="both"
+                                                checked>
+                                            <label for="indicatorBoth">Both</label>
+                                            <input type="radio" name="progressIndicator" id="indicatorNone" value="none">
+                                            <label for="indicatorNone">None</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Summary Content Selection -->
+                            <div class="setting-item surface">
+                                <div>
+                                    <span class="setting-label">Summary Content</span>
+                                    <span class="setting-description">Choose what information appears in the daily
+                                        summary</span>
+                                </div>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" id="summaryShowSolar" checked>
+                                        <span>Sunrise/Sunset</span>
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" id="summaryShowTemp" checked>
+                                        <span>Temperature Range</span>
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" id="summaryShowWeather" checked>
+                                        <span>Weather Conditions</span>
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" id="summaryShowMoon" checked>
+                                        <span>Moon Phase</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </section>
+
                         <section class="settings-panel" id="cardsTab" data-tab-id="cards" data-label="Cards"
                             data-icon="fa-layer-group">
                             <div class="settings-panel-header">
@@ -209,19 +307,15 @@
                         </div>
                         <canvas id="sunCanvas"></canvas>
                         <div class="time-slider-container">
-                            <div id="timeSlider" class="tick-slider"
-                                role="slider"
-                                tabindex="0"
-                                aria-label="Time of day slider, use arrow keys to adjust"
-                                aria-valuemin="0"
-                                aria-valuemax="1439"
-                                aria-valuenow="0"
-                                aria-valuetext="12:00 AM">
+                            <div id="timeSlider" class="tick-slider" role="slider" tabindex="0"
+                                aria-label="Time of day slider, use arrow keys to adjust" aria-valuemin="0"
+                                aria-valuemax="1439" aria-valuenow="0" aria-valuetext="12:00 AM">
                                 <!-- Ticks will be generated dynamically by JavaScript -->
                             </div>
                             <div class="time-pill" id="timePill">
                                 <span class="time-text">12:00 AM</span>
-                                <button class="time-reset-btn" id="timeResetBtn" aria-label="Reset to current time">×</button>
+                                <button class="time-reset-btn" id="timeResetBtn"
+                                    aria-label="Reset to current time">×</button>
                             </div>
                             <div class="solar-event-markers" id="solarEventMarkers">
                                 <div class="marker sunrise" id="markerSunrise"></div>
@@ -237,7 +331,8 @@
                                 <h3 id="sunDetailTitle">Expanded view</h3>
                                 <p class="sun-detail-sub" id="sunDetailSub">Select a card to see deeper context.</p>
                             </div>
-                            <button class="sun-detail-close" id="closeDetailOverlay" aria-label="Close details and return to sun graph">
+                            <button class="sun-detail-close" id="closeDetailOverlay"
+                                aria-label="Close details and return to sun graph">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
@@ -248,16 +343,25 @@
 
             <!-- Right pane: Info cards -->
             <div id="panel">
-                <div class="panel-intro">
-                    <p class="eyebrow">Daily briefing</p>
-                    <div class="panel-intro-row">
-                        <div>
-                            <h2>Today at a glance</h2>
-                            <p class="panel-intro-sub">Live conditions, solar milestones, and upcoming sky events tuned to your coordinates.</p>
+                <div class="panel-intro split-banner layout-full">
+                    <div class="banner-left">
+                        <p class="eyebrow">Daily briefing</p>
+                        <h2>Today at a glance</h2>
+                        <p class="panel-intro-sub banner-daily-summary" id="bannerDailySummary">Loading daily summary...
+                        </p>
+                    </div>
+                    <div class="banner-separator"></div>
+                    <div class="banner-right">
+                        <div class="card-carousel" id="bannerCarousel">
+                            <!-- Rotating card previews will be inserted here -->
                         </div>
-                        <div class="pill-group" aria-hidden="true">
-                            <span class="pill accent">Live data</span>
-                            <span class="pill outline">Drag to reorder cards</span>
+                        <div class="carousel-indicators">
+                            <div class="carousel-progress-bar">
+                                <div class="carousel-progress-fill" id="carouselProgressFill"></div>
+                            </div>
+                            <div class="carousel-dots" id="carouselDots">
+                                <!-- Pagination dots will be inserted here -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -296,6 +400,8 @@
     <script src="js/solar-visualization.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/card-renderer.js"></script>
+    <script src="js/daily-summary.js"></script>
+    <script src="js/banner-carousel.js"></script>
     <script src="js/grid.js"></script>
     <script src="js/main.js"></script>
 </body>

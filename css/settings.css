@@ -101,7 +101,7 @@
 }
 
 .settings-body {
-    padding: var(--space-5) var(--space-6) var(--space-6);
+    padding: var(--space-5) var(--space-5) var(--space-6);
     overflow: hidden;
     flex: 1;
     min-height: 0;
@@ -143,7 +143,6 @@
     height: 0;
     background: color-mix(in srgb, var(--accent) 18%, transparent);
     border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
     border-radius: var(--radius-lg);
     transition: transform var(--transition-base) var(--ease-out), width var(--transition-base) var(--ease-out), height var(--transition-base) var(--ease-out);
     pointer-events: none;
@@ -171,7 +170,7 @@
 
 .settings-nav-item:hover {
     color: var(--text);
-    transform: translateX(4px);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .settings-nav-item.active {
@@ -208,7 +207,7 @@
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius-xl);
-    padding: var(--space-4) var(--space-5);
+    padding: var(--space-4) var(--space-3);
     overflow: hidden;
     position: relative;
     min-height: 0;
@@ -218,6 +217,8 @@
     display: none;
     height: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 2px;
 }
 
 .settings-panel.active {
@@ -258,7 +259,6 @@
     background: color-mix(in srgb, var(--card) 94%, transparent);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
     margin-bottom: var(--space-3);
 }
 
@@ -358,6 +358,100 @@
     border-radius: var(--radius-sm);
 }
 
+/* Setting group for nested controls */
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+.setting-row-label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text);
+}
+
+.segmented-control.compact {
+    min-width: auto;
+}
+
+.segmented-control.compact label {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+}
+
+/* Checkbox group */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text);
+    font-size: var(--text-sm);
+    transition: color var(--transition-base) var(--ease-out);
+}
+
+.checkbox-item:hover {
+    color: var(--accent);
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-xs);
+    border: 2px solid var(--line);
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: all var(--transition-base) var(--ease-out);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.checkbox-item input[type="checkbox"]:hover {
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.checkbox-item input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.checkbox-item input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--accent-content);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.checkbox-item input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
 /* Card management list */
 .card-list {
     display: flex;
@@ -455,7 +549,7 @@
 /* Color picker */
 .color-picker {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: var(--space-3);
     width: 100%;
 }
@@ -696,7 +790,7 @@
 
 @media (max-width: 640px) {
     .settings-body {
-        padding: var(--space-4);
+        padding: var(--space-3);
     }
 
     .settings-nav-item {
@@ -704,10 +798,15 @@
     }
 
     .settings-panels {
-        padding: var(--space-3);
+        padding: var(--space-3) var(--space-2);
     }
 
     .setting-item.surface {
         padding: var(--space-3);
+    }
+
+    .color-picker {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: var(--space-2);
     }
 }

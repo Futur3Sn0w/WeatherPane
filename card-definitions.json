@@ -24,9 +24,14 @@
         "id": "sunsetCard",
         "dataCard": "sunset",
         "title": "Sunset",
-        "badges": [
-            { "id": "sunsetDayBadge", "class": "day-toggle-badge", "text": "TOD" }
-        ],
+        "badges": [],
+        "controls": {
+            "type": "segmented",
+            "buttons": [
+                { "id": "sunsetTodayBtn", "text": "Today", "active": true, "value": "today" },
+                { "id": "sunsetTomorrowBtn", "text": "Tomorrow", "active": false, "value": "tomorrow" }
+            ]
+        },
         "summary": {
             "hasDayToggle": true,
             "todayData": {
@@ -68,9 +73,14 @@
         "id": "nightCard",
         "dataCard": "night",
         "title": "Night Start",
-        "badges": [
-            { "id": "nightDayBadge", "class": "day-toggle-badge", "text": "TOD" }
-        ],
+        "badges": [],
+        "controls": {
+            "type": "segmented",
+            "buttons": [
+                { "id": "nightTodayBtn", "text": "Today", "active": true, "value": "today" },
+                { "id": "nightTomorrowBtn", "text": "Tomorrow", "active": false, "value": "tomorrow" }
+            ]
+        },
         "summary": {
             "hasDayToggle": true,
             "todayData": {
@@ -112,9 +122,13 @@
         "id": "moonCard",
         "dataCard": "moon",
         "title": "Moon",
-        "badges": [
-            { "id": "moonTestBadge", "class": "moon-test-badge", "html": "<i class=\"fa-solid fa-chevron-down\"></i>", "title": "Test moon phases" }
-        ],
+        "badges": [],
+        "controls": {
+            "type": "icon",
+            "buttons": [
+                { "id": "moonTestBtn", "icon": "chevron-down", "title": "Test moon phases", "toggle": true }
+            ]
+        },
         "summary": {
             "customHTML": "<div class=\"moon\"><svg class=\"icon\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><defs><radialGradient id=\"moonGradient\" cx=\"36%\" cy=\"40%\"><stop offset=\"0%\" stop-color=\"#fff\" /><stop offset=\"50%\" stop-color=\"#e6e9ef\" /><stop offset=\"60%\" stop-color=\"#cfd6e4\" /><stop offset=\"100%\" stop-color=\"#8895aa\" /></radialGradient></defs><circle cx=\"50\" cy=\"50\" r=\"44\" fill=\"url(#moonGradient)\" id=\"moonSurface\" /><path id=\"moonShadow\" fill=\"rgba(10, 10, 20, 0.95)\" /></svg><div><div class=\"label\" id=\"moonPhaseLabel\">—</div><div class=\"kicker\" id=\"moonRiseSet\">—</div></div></div>"
         },
@@ -124,7 +138,7 @@
             { "label": "Altitude", "id": "moonAltitude" },
             { "label": "Distance", "id": "moonDistance" }
         ],
-        "extraHTML": "<div class=\"moon-test-slider\" id=\"moonTestSlider\"><label for=\"moonPhaseSlider\" class=\"moon-slider-label\"><span id=\"moonSliderPhaseName\">Half Moon</span><span class=\"moon-slider-value\" id=\"moonSliderValue\">50%</span></label><div class=\"moon-slider-next\" id=\"moonSliderNext\">Next occurs: —</div><input type=\"range\" id=\"moonPhaseSlider\" min=\"0\" max=\"100\" value=\"50\" step=\"1\"></div>"
+        "extraHTML": "<div class=\"moon-test-slider\" id=\"moonTestSlider\"><label for=\"moonPhaseSlider\" class=\"moon-slider-label\"><span id=\"moonSliderPhaseName\">Half Moon</span><span class=\"moon-slider-value\" id=\"moonSliderValue\">50%</span></label><div class=\"moon-slider-next\" id=\"moonSliderNext\">Next occurs: —</div><input type=\"range\" id=\"moonPhaseSlider\" min=\"0\" max=\"100\" value=\"50\" step=\"1\"><button class=\"moon-reset-btn\" id=\"moonResetBtn\" style=\"display: none;\"><i class=\"fa-solid fa-rotate-left\"></i> Reset to Live</button></div>"
     },
     {
         "id": "astronomicalEventsCard",
@@ -258,9 +272,14 @@
         "id": "sunriseCard",
         "dataCard": "sunrise",
         "title": "Sunrise",
-        "badges": [
-            { "id": "sunriseDayBadge", "class": "day-toggle-badge", "text": "TOD" }
-        ],
+        "badges": [],
+        "controls": {
+            "type": "segmented",
+            "buttons": [
+                { "id": "sunriseTodayBtn", "text": "Today", "active": true, "value": "today" },
+                { "id": "sunriseTomorrowBtn", "text": "Tomorrow", "active": false, "value": "tomorrow" }
+            ]
+        },
         "summary": {
             "hasDayToggle": true,
             "todayData": {
@@ -296,10 +315,26 @@
         "id": "currentWeatherCard",
         "dataCard": "currentWeather",
         "title": "Weather",
-        "badges": [
-            { "id": "weatherDayBadge", "class": "day-toggle-badge", "text": "TOD" },
-            { "id": "tempUnitBadge", "class": "temp-unit-badge", "text": "°C" }
-        ],
+        "badges": [],
+        "controls": {
+            "type": "multi",
+            "groups": [
+                {
+                    "type": "segmented",
+                    "buttons": [
+                        { "id": "weatherTodayBtn", "text": "Today", "active": true, "value": "today" },
+                        { "id": "weatherTomorrowBtn", "text": "Tomorrow", "active": false, "value": "tomorrow" }
+                    ]
+                },
+                {
+                    "type": "segmented",
+                    "buttons": [
+                        { "id": "tempCelsiusBtn", "text": "°C", "active": true, "value": "celsius" },
+                        { "id": "tempFahrenheitBtn", "text": "°F", "active": false, "value": "fahrenheit" }
+                    ]
+                }
+            ]
+        },
         "summary": {
             "hasDayToggle": true,
             "todayData": {

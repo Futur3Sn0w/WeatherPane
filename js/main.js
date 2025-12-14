@@ -609,6 +609,27 @@ async function init() {
     updateCloudTimelineCard(data, hourlyTimes);
     updateTwilightCard(times, tomorrowTimes, now);
 
+    // Update daily summary banner
+    if (window.dailySummaryGenerator && window.updateBannerSummary) {
+        const tempUnit = localStorage.getItem('weatherPane:tempUnit') || 'C';
+        window.dailySummaryGenerator.setTemperatureUnit(tempUnit);
+
+        window.dailySummaryGenerator.updateData({
+            sunrise: sunrise,
+            sunset: sunset,
+            solarNoon: solarNoon,
+            maxTemp: data.daily.temperature_2m_max ? data.daily.temperature_2m_max[0] : null,
+            minTemp: data.daily.temperature_2m_min ? data.daily.temperature_2m_min[0] : null,
+            weatherCode: currentWeatherCode,
+            moonPhase: illum.phase,
+            moonIllumination: illum.fraction,
+            precipProbability: data.daily.precipitation_probability_max ? data.daily.precipitation_probability_max[0] : null
+        });
+
+        window.updateBannerSummary();
+        console.log('[Daily Summary] Banner updated with current data');
+    }
+
     console.log('[Init] All data populated successfully!');
     if (typeof scheduleBackgroundRefresh === 'function') {
         scheduleBackgroundRefresh();

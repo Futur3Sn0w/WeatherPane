@@ -58,7 +58,7 @@
     --blur-xl: blur(32px);
 
     /* ========== LAYOUT ========== */
-    --maxw: min(1400px, calc(100vw - 64px));
+    --maxw: 1400px;
     --accent-content: #001527;
     --header-bg: var(--hover-muted);
 }
@@ -374,6 +374,7 @@ body[data-theme-mode="light"][data-theme-color="grey"] {
 
 /* Reduced motion support for users who prefer less animation */
 @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {

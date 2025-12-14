@@ -259,5 +259,12 @@ function toggleTemperatureUnit() {
     updateTemperatureDisplay();
     updateTomorrowTemperatureDisplay();
     updateWeatherDetail();
+
+    // Update daily summary banner with new unit
+    if (window.dailySummaryGenerator && window.updateBannerSummary) {
+        window.dailySummaryGenerator.setTemperatureUnit(temperatureUnit);
+        window.updateBannerSummary();
+    }
+
     console.log(`[Temperature] Toggled to ${temperatureUnit}`);
 }
