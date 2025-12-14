@@ -1,0 +1,334 @@
+[
+    {
+        "id": "solarNoonCard",
+        "dataCard": "solarNoon",
+        "title": "Solar Noon",
+        "badges": [],
+        "summary": {
+            "metrics": [
+                { "id": "solarNoon", "suffix": "solarNoonAmPm" }
+            ],
+            "pills": [
+                { "id": "solarNoonDelta", "text": "—" }
+            ],
+            "kicker": { "id": "solarNoonSub", "text": "Calculating…" }
+        },
+        "details": [
+            { "label": "Sun altitude", "id": "solarNoonAltitude" },
+            { "label": "Sun azimuth", "id": "solarNoonAzimuth" },
+            { "label": "Offset from clock noon", "id": "solarNoonOffset" },
+            { "label": "Daylight fraction", "id": "solarNoonDayFraction" }
+        ]
+    },
+    {
+        "id": "sunsetCard",
+        "dataCard": "sunset",
+        "title": "Sunset",
+        "badges": [
+            { "id": "sunsetDayBadge", "class": "day-toggle-badge", "text": "TOD" }
+        ],
+        "summary": {
+            "hasDayToggle": true,
+            "todayData": {
+                "metrics": [
+                    { "id": "sunset", "suffix": "sunsetAmPm" }
+                ],
+                "pills": [
+                    { "id": "dayLeft", "text": "—", "style": "background:var(--accent-2)" }
+                ],
+                "kicker": { "id": "sunsetSub", "text": "—" }
+            },
+            "tomorrowData": {
+                "metrics": [
+                    { "id": "sunsetTomorrow", "suffix": "sunsetTomorrowAmPm" }
+                ],
+                "pills": [
+                    { "id": "sunsetTomorrowDelta", "text": "—", "style": "background:var(--accent-2)" }
+                ],
+                "kicker": { "id": "sunsetTomorrowSub", "text": "—" }
+            }
+        },
+        "details": {
+            "hasDayToggle": true,
+            "todayData": [
+                { "label": "Civil dusk", "id": "sunsetCivilDusk" },
+                { "label": "Nautical dusk", "id": "sunsetNauticalDusk" },
+                { "label": "Astronomical dusk", "id": "sunsetAstronomicalDusk" },
+                { "label": "Golden hour ends", "id": "sunsetGoldenHourEnd" }
+            ],
+            "tomorrowData": [
+                { "label": "Civil dusk", "id": "sunsetTomorrowCivilDusk" },
+                { "label": "Nautical dusk", "id": "sunsetTomorrowNauticalDusk" },
+                { "label": "Astronomical dusk", "id": "sunsetTomorrowAstronomicalDusk" },
+                { "label": "Golden hour ends", "id": "sunsetTomorrowGoldenHourEnd" }
+            ]
+        }
+    },
+    {
+        "id": "nightCard",
+        "dataCard": "night",
+        "title": "Night Start",
+        "badges": [
+            { "id": "nightDayBadge", "class": "day-toggle-badge", "text": "TOD" }
+        ],
+        "summary": {
+            "hasDayToggle": true,
+            "todayData": {
+                "metrics": [
+                    { "id": "nightStart", "suffix": "nightAmPm" }
+                ],
+                "pills": [
+                    { "id": null, "text": "After dusk", "style": "background:var(--accent-3)" }
+                ],
+                "kicker": { "id": "nightSub", "text": "Civil → Nautical → Astronomical" }
+            },
+            "tomorrowData": {
+                "metrics": [
+                    { "id": "nightStartTomorrow", "suffix": "nightTomorrowAmPm" }
+                ],
+                "pills": [
+                    { "id": null, "text": "After dusk", "style": "background:var(--accent-3)" }
+                ],
+                "kicker": { "id": "nightTomorrowSub", "text": "Civil → Nautical → Astronomical" }
+            }
+        },
+        "details": {
+            "hasDayToggle": true,
+            "todayData": [
+                { "label": "Astronomical dusk", "id": "nightAstronomicalDusk" },
+                { "label": "Astronomical dawn", "id": "nightAstronomicalDawn" },
+                { "label": "Length of night", "id": "nightLength" },
+                { "label": "Moon overlap", "id": "nightMoonOverlap" }
+            ],
+            "tomorrowData": [
+                { "label": "Astronomical dusk", "id": "nightTomorrowAstronomicalDusk" },
+                { "label": "Astronomical dawn", "id": "nightTomorrowAstronomicalDawn" },
+                { "label": "Length of night", "id": "nightTomorrowLength" },
+                { "label": "Moon overlap", "id": "nightTomorrowMoonOverlap" }
+            ]
+        }
+    },
+    {
+        "id": "moonCard",
+        "dataCard": "moon",
+        "title": "Moon",
+        "badges": [
+            { "id": "moonTestBadge", "class": "moon-test-badge", "html": "<i class=\"fa-solid fa-chevron-down\"></i>", "title": "Test moon phases" }
+        ],
+        "summary": {
+            "customHTML": "<div class=\"moon\"><svg class=\"icon\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><defs><radialGradient id=\"moonGradient\" cx=\"36%\" cy=\"40%\"><stop offset=\"0%\" stop-color=\"#fff\" /><stop offset=\"50%\" stop-color=\"#e6e9ef\" /><stop offset=\"60%\" stop-color=\"#cfd6e4\" /><stop offset=\"100%\" stop-color=\"#8895aa\" /></radialGradient></defs><circle cx=\"50\" cy=\"50\" r=\"44\" fill=\"url(#moonGradient)\" id=\"moonSurface\" /><path id=\"moonShadow\" fill=\"rgba(10, 10, 20, 0.95)\" /></svg><div><div class=\"label\" id=\"moonPhaseLabel\">—</div><div class=\"kicker\" id=\"moonRiseSet\">—</div></div></div>"
+        },
+        "details": [
+            { "label": "Illumination", "id": "moonIllumination" },
+            { "label": "Phase angle", "id": "moonPhaseAngle" },
+            { "label": "Altitude", "id": "moonAltitude" },
+            { "label": "Distance", "id": "moonDistance" }
+        ],
+        "extraHTML": "<div class=\"moon-test-slider\" id=\"moonTestSlider\"><label for=\"moonPhaseSlider\" class=\"moon-slider-label\"><span id=\"moonSliderPhaseName\">Half Moon</span><span class=\"moon-slider-value\" id=\"moonSliderValue\">50%</span></label><div class=\"moon-slider-next\" id=\"moonSliderNext\">Next occurs: —</div><input type=\"range\" id=\"moonPhaseSlider\" min=\"0\" max=\"100\" value=\"50\" step=\"1\"></div>"
+    },
+    {
+        "id": "astronomicalEventsCard",
+        "dataCard": "astronomicalEvents",
+        "title": "Astronomical Events",
+        "badges": [],
+        "summary": {
+            "metrics": [
+                { "id": "astroEventName", "text": "—", "isValue": true }
+            ],
+            "kicker": { "id": "astroEventDate", "text": "Calculating…" }
+        },
+        "details": [
+            { "label": "Event type", "id": "astroEventType" },
+            { "label": "Date & time", "id": "astroEventDateTime" },
+            { "label": "Visibility", "id": "astroEventVisibility" },
+            { "label": "Next event", "id": "astroNextEvent" }
+        ]
+    },
+    {
+        "id": "dayProgressCard",
+        "dataCard": "daylight",
+        "title": "Daylight",
+        "badges": [],
+        "summary": {
+            "customHTML": "<div class=\"bar\" aria-label=\"Day progress\"><div class=\"fill\" id=\"dayFill\"></div></div><div class=\"kicker\" style=\"margin-top:10px; text-align: center;\" id=\"daylightInfo\">—</div>"
+        },
+        "details": [
+            { "label": "First light (dawn)", "id": "daylightDawn" },
+            { "label": "Last light (dusk)", "id": "daylightDusk" },
+            { "label": "Golden hour", "id": "daylightGoldenHour" },
+            { "label": "Sun above horizon", "id": "daylightAboveHorizon" }
+        ]
+    },
+    {
+        "id": "seasonCard",
+        "dataCard": "season",
+        "title": "Season",
+        "badges": [],
+        "summary": {
+            "customHTML": "<div class=\"season-display\"><div class=\"season-info\"><div class=\"season-name\" id=\"seasonNow\">—</div><div class=\"season-subtitle\" id=\"seasonEndsIn\">—</div></div><div class=\"season-icon\" id=\"seasonIcon\" aria-hidden=\"true\"></div></div><div class=\"season-footer\"><span class=\"season-range\" id=\"seasonRange\">—</span><span class=\"season-location\" id=\"seasonLocation\">—</span></div>"
+        },
+        "details": [
+            { "label": "Next Event", "id": "seasonNext" },
+            { "label": "Days until event", "id": "seasonDaysUntil" },
+            { "label": "Event date", "id": "seasonEventDate" },
+            { "label": "Days since previous", "id": "seasonSincePrev" },
+            { "label": "Approx hemisphere", "id": "seasonHemisphere" }
+        ]
+    },
+    {
+        "id": "uvCard",
+        "dataCard": "uv",
+        "title": "UV Index",
+        "badges": [],
+        "summary": {
+            "metrics": [
+                { "id": "uvNow", "suffix": "uvNowLabel" }
+            ],
+            "pills": [
+                { "id": "uvMaxPill", "text": "—" }
+            ],
+            "kicker": { "id": "uvAdvice", "text": "—" }
+        },
+        "details": [
+            { "label": "Current", "id": "uvDetailNow" },
+            { "label": "Max today", "id": "uvDetailMax" },
+            { "label": "Next shift", "id": "uvNextChange" },
+            { "label": "Cloud cover effect", "id": "uvCloudFactor" }
+        ]
+    },
+    {
+        "id": "visibilityCard",
+        "dataCard": "visibility",
+        "title": "Visibility",
+        "badges": [],
+        "summary": {
+            "metrics": [
+                { "id": "visibilityNow", "suffix": "visibilityUnit" }
+            ],
+            "pills": [
+                { "id": "visibilityQuality", "text": "—" }
+            ],
+            "kicker": { "id": "visibilityNext", "text": "—" }
+        },
+        "details": [
+            { "label": "Current", "id": "visibilityDetailNow" },
+            { "label": "Next improvement", "id": "visibilityImproves" },
+            { "label": "Stargazing", "id": "visibilityStars" },
+            { "label": "Photography", "id": "visibilityPhoto" }
+        ]
+    },
+    {
+        "id": "cloudTimelineCard",
+        "dataCard": "cloudTimeline",
+        "title": "Cloud Timeline",
+        "badges": [],
+        "summary": {
+            "customHTML": "<div class=\"mini-bars\" id=\"cloudMiniBars\"></div><div class=\"kicker\" id=\"cloudMiniLabel\">—</div>"
+        },
+        "details": [
+            { "label": "Next clearing", "id": "cloudNextClear" },
+            { "label": "Next overcast", "id": "cloudNextOvercast" },
+            { "label": "Current cover", "id": "cloudDetailNow" },
+            { "label": "6h average", "id": "cloudDetailAvg" }
+        ]
+    },
+    {
+        "id": "twilightCard",
+        "dataCard": "twilight",
+        "title": "Twilight Windows",
+        "badges": [],
+        "summary": {
+            "metrics": [
+                { "id": "twilightNextLabel", "text": "—", "isValue": true }
+            ],
+            "pills": [
+                { "id": "twilightNextTime", "text": "—" }
+            ],
+            "kicker": { "id": "twilightKicker", "text": "—" }
+        },
+        "details": [
+            { "label": "Golden hour (AM)", "id": "twilightGoldenAm" },
+            { "label": "Golden hour (PM)", "id": "twilightGoldenPm" },
+            { "label": "Blue hour (AM)", "id": "twilightBlueAm" },
+            { "label": "Blue hour (PM)", "id": "twilightBluePm" },
+            { "label": "Next window", "id": "twilightNextWindow" }
+        ]
+    },
+    {
+        "id": "sunriseCard",
+        "dataCard": "sunrise",
+        "title": "Sunrise",
+        "badges": [
+            { "id": "sunriseDayBadge", "class": "day-toggle-badge", "text": "TOD" }
+        ],
+        "summary": {
+            "hasDayToggle": true,
+            "todayData": {
+                "metrics": [
+                    { "id": "sunriseToday", "suffix": "sunriseTodayAmPm" }
+                ],
+                "kicker": { "id": "sunriseTodaySub", "text": "—" }
+            },
+            "tomorrowData": {
+                "metrics": [
+                    { "id": "sunriseTomorrow", "suffix": "sunriseAmPm" }
+                ],
+                "kicker": { "id": "sunriseSub", "text": "—" }
+            }
+        },
+        "details": {
+            "hasDayToggle": true,
+            "todayData": [
+                { "label": "Civil dawn", "id": "sunriseTodayCivilDawn" },
+                { "label": "Nautical dawn", "id": "sunriseTodayNauticalDawn" },
+                { "label": "Astronomical dawn", "id": "sunriseTodayAstronomicalDawn" },
+                { "label": "Golden hour starts", "id": "sunriseTodayGoldenHourStart" }
+            ],
+            "tomorrowData": [
+                { "label": "Civil dawn", "id": "sunriseCivilDawn" },
+                { "label": "Nautical dawn", "id": "sunriseNauticalDawn" },
+                { "label": "Daylight gain", "id": "sunriseGain" },
+                { "label": "Next solar noon", "id": "sunriseNextNoon" }
+            ]
+        }
+    },
+    {
+        "id": "currentWeatherCard",
+        "dataCard": "currentWeather",
+        "title": "Weather",
+        "badges": [
+            { "id": "weatherDayBadge", "class": "day-toggle-badge", "text": "TOD" },
+            { "id": "tempUnitBadge", "class": "temp-unit-badge", "text": "°C" }
+        ],
+        "summary": {
+            "hasDayToggle": true,
+            "todayData": {
+                "metrics": [
+                    { "id": "temp", "suffix": null, "smallSuffix": "°" }
+                ],
+                "kicker": { "id": "nowMeta", "text": "—" }
+            },
+            "tomorrowData": {
+                "metrics": [
+                    { "id": "tempTomorrow", "suffix": null, "smallSuffix": "°" }
+                ],
+                "kicker": { "id": "tomorrowMeta", "text": "—" }
+            }
+        },
+        "details": {
+            "hasDayToggle": true,
+            "todayData": [
+                { "label": "Conditions", "id": "nowConditions" },
+                { "label": "Wind / Gusts", "id": "nowWind" },
+                { "label": "Humidity", "id": "nowHumidity" },
+                { "label": "Feels like", "id": "nowFeelsLike" }
+            ],
+            "tomorrowData": [
+                { "label": "High / Low", "id": "tomorrowHighLow" },
+                { "label": "Precipitation", "id": "tomorrowPrecip" },
+                { "label": "Wind / Gusts", "id": "tomorrowWind" },
+                { "label": "Daylight", "id": "tomorrowDaylight" }
+            ]
+        }
+    }
+]
