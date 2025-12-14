@@ -65,6 +65,12 @@ class ThreeJSVolumetricClouds {
         this.start();
     }
 
+    isHidden() {
+        if (!this.container || !this.container.isConnected) return true;
+        const rect = this.container.getBoundingClientRect();
+        return rect.width === 0 || rect.height === 0;
+    }
+
     createCloudMaterial() {
         const palette = this.getPalette();
 
@@ -271,6 +277,11 @@ class ThreeJSVolumetricClouds {
     animate = () => {
         if (!this.running) return;
 
+        if (this.isHidden()) {
+            this.animationId = requestAnimationFrame(this.animate);
+            return;
+        }
+
         this.animationId = requestAnimationFrame(this.animate);
         this.time += 0.016; // ~60fps
 
@@ -305,6 +316,7 @@ class ThreeJSVolumetricClouds {
     }
 
     resize() {
+        if (this.isHidden()) return;
         const rect = this.container.getBoundingClientRect();
         const width = rect.width;
         const height = rect.height;

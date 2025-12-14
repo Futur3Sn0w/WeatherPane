@@ -67,7 +67,16 @@ class SunVisualization {
             if (this.starfield) {
                 this.starfield.resize(rect.width, rect.height);
             }
-        };
+
+        // Re-clamp slider position to the new width
+        if (typeof this.currentMinutes === 'number') {
+            const percent = Math.max(0, Math.min(1, this.currentMinutes / 1439));
+            this.setSliderPosition(percent);
+        }
+
+        // Recompute tick density to fit the available width
+        this.recalculateTickDensity();
+    };
         resize();
 
         let resizeTimeout;
@@ -77,6 +86,25 @@ class SunVisualization {
                 resize();
                 this.render();
             }, 100);
+        });
+
+        // Track mouse position for hover-reveal time markers
+        this.mouseX = -1000;
+        this.mouseY = -1000;
+
+        this.canvas.addEventListener('mousemove', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            this.mouseX = e.clientX - rect.left;
+            this.mouseY = e.clientY - rect.top;
+            // Re-render on mouse move to show/hide labels
+            this.render();
+        });
+
+        this.canvas.addEventListener('mouseleave', () => {
+            this.mouseX = -1000;
+            this.mouseY = -1000;
+            // Re-render to hide labels
+            this.render();
         });
     }
 
@@ -91,8 +119,14 @@ class SunVisualization {
     }
 
     setupSlider() {
-        const updateFromSlider = () => {
-            const minutes = parseInt(this.slider.value);
+        // Generate tick marks (96 ticks = one per 15 minutes)
+        this.tickCount = 96;
+        this.currentMinutes = 0;
+        this.ticks = [];
+        this.recalculateTickDensity();
+
+        const updateFromSlider = (minutes) => {
+            this.currentMinutes = minutes;
             this.displayTime = new Date();
             this.displayTime.setHours(Math.floor(minutes / 60));
             this.displayTime.setMinutes(minutes % 60);
@@ -102,11 +136,15 @@ class SunVisualization {
 
             // Update pill position and text
             const percent = minutes / 1439;
-            this.pill.style.left = `${percent * 100}%`;
+            this.setSliderPosition(percent);
             this.timeText.textContent = timeStr;
 
             // Update time display
             this.timeDisplay.textContent = timeStr;
+
+            // Update ARIA attributes
+            this.slider.setAttribute('aria-valuenow', minutes);
+            this.slider.setAttribute('aria-valuetext', timeStr);
 
             // Update reset button visibility
             this.updateResetButtonVisibility();
@@ -117,46 +155,124 @@ class SunVisualization {
             // Update solar event countdown
             this.updateSolarEventCountdown();
 
+            // Update tick heights and states
+            this.updateTickStates();
+
             this.render();
         };
 
-        // Set initial slider value to current time
+        // Set initial value to current time
         const now = new Date();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
-        this.slider.value = currentMinutes;
-        updateFromSlider();
+        updateFromSlider(currentMinutes);
+        // Run density calc once layout has settled (helps on initial load)
+        requestAnimationFrame(() => this.recalculateTickDensity());
 
-        // Track user interaction
-        this.slider.addEventListener('mousedown', () => {
+        // Click and drag handling
+        let isDragging = false;
+
+        const getMinutesFromEvent = (e) => {
+            const rect = this.slider.getBoundingClientRect();
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+            const percent = Math.max(0, Math.min(1, x / rect.width));
+            return Math.round(percent * 1439);
+        };
+
+        const startInteraction = (e) => {
+            isDragging = true;
             this.isUserInteracting = true;
             this.isAnimating = false;
-            this.slider.classList.remove('smooth-transition');
-            this.pill.classList.add('no-transition'); // Disable pill transition while dragging
+            this.pill.classList.add('no-transition');
             clearTimeout(this.userInteractionTimeout);
-        });
 
-        this.slider.addEventListener('touchstart', () => {
-            this.isUserInteracting = true;
-            this.isAnimating = false;
-            this.slider.classList.remove('smooth-transition');
-            this.pill.classList.add('no-transition'); // Disable pill transition while dragging
-            clearTimeout(this.userInteractionTimeout);
-        });
+            const minutes = getMinutesFromEvent(e);
+            updateFromSlider(minutes);
+        };
+
+        const moveInteraction = (e) => {
+            if (isDragging) {
+                const minutes = getMinutesFromEvent(e);
+                updateFromSlider(minutes);
+            }
+        };
 
         const endInteraction = () => {
-            // Re-enable pill transition
+            isDragging = false;
             this.pill.classList.remove('no-transition');
 
-            // Wait 3 seconds after user stops interacting before allowing auto-updates
             clearTimeout(this.userInteractionTimeout);
             this.userInteractionTimeout = setTimeout(() => {
                 this.isUserInteracting = false;
             }, 3000);
         };
 
-        this.slider.addEventListener('mouseup', endInteraction);
-        this.slider.addEventListener('touchend', endInteraction);
-        this.slider.addEventListener('input', updateFromSlider);
+        this.slider.addEventListener('mousedown', startInteraction);
+        this.slider.addEventListener('touchstart', startInteraction);
+
+        document.addEventListener('mousemove', moveInteraction);
+        document.addEventListener('touchmove', moveInteraction);
+
+        document.addEventListener('mouseup', endInteraction);
+        document.addEventListener('touchend', endInteraction);
+
+        // Cursor proximity effect
+        this.slider.addEventListener('mousemove', (e) => {
+            const rect = this.slider.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percent = x / rect.width;
+            const tickIndex = Math.round(percent * (this.tickCount - 1));
+
+            // Highlight ticks near cursor (±5 ticks)
+            this.ticks.forEach((tick, i) => {
+                const distance = Math.abs(i - tickIndex);
+                if (distance <= 5) {
+                    tick.classList.add('near-cursor');
+                } else {
+                    tick.classList.remove('near-cursor');
+                }
+            });
+        });
+
+        this.slider.addEventListener('mouseleave', () => {
+            // Remove all cursor proximity highlights
+            this.ticks.forEach(tick => tick.classList.remove('near-cursor'));
+        });
+
+        // Keyboard shortcuts for easier navigation
+        this.slider.addEventListener('keydown', (e) => {
+            const current = this.currentMinutes;
+
+            switch(e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    updateFromSlider(Math.max(0, current - 15)); // -15 minutes
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    updateFromSlider(Math.min(1439, current + 15)); // +15 minutes
+                    break;
+                case 'PageUp':
+                    e.preventDefault();
+                    updateFromSlider(Math.min(1439, current + 60)); // +1 hour
+                    break;
+                case 'PageDown':
+                    e.preventDefault();
+                    updateFromSlider(Math.max(0, current - 60)); // -1 hour
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    if (this.sunrise) {
+                        updateFromSlider(this.sunrise.getHours() * 60 + this.sunrise.getMinutes());
+                    }
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    if (this.sunset) {
+                        updateFromSlider(this.sunset.getHours() * 60 + this.sunset.getMinutes());
+                    }
+                    break;
+            }
+        });
     }
 
     setupResetButton() {
@@ -170,27 +286,107 @@ class SunVisualization {
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
         // Set up smooth animation
-        this.animationStartMinutes = parseInt(this.slider.value);
+        this.animationStartMinutes = this.currentMinutes;
         this.animationTargetMinutes = currentMinutes;
         this.animationStartTime = Date.now();
         this.isAnimating = true;
 
-        // Enable smooth transitions
-        this.slider.classList.add('smooth-transition');
+        // Update to current time (the animation will be handled by updateTickStates)
+        this.currentMinutes = currentMinutes;
+        this.displayTime = new Date();
+        this.displayTime.setHours(Math.floor(currentMinutes / 60));
+        this.displayTime.setMinutes(currentMinutes % 60);
+        this.displayTime.setSeconds(0);
 
-        // Set final value (CSS will animate the thumb)
-        this.slider.value = currentMinutes;
+        const timeStr = fmt(this.displayTime).t + ' ' + fmt(this.displayTime).am;
 
-        console.log('[SunViz] Reset to current time - animating from', this.animationStartMinutes, 'to', this.animationTargetMinutes);
+        // Update pill position and text
+        const percent = currentMinutes / 1439;
+        this.setSliderPosition(percent);
+        this.timeText.textContent = timeStr;
+
+        // Update time display
+        this.timeDisplay.textContent = timeStr;
+
+        // Update ARIA attributes
+        this.slider.setAttribute('aria-valuenow', currentMinutes);
+        this.slider.setAttribute('aria-valuetext', timeStr);
+
+        // Update reset button visibility
+        this.updateResetButtonVisibility();
+
+        // Update pill visibility
+        this.updatePillVisibility();
+
+        // Update solar event countdown
+        this.updateSolarEventCountdown();
+
+        // Update tick states
+        this.updateTickStates();
+
+        this.render();
+
+        console.log('[SunViz] Reset to current time:', currentMinutes);
+    }
+
+    setSliderPosition(percent) {
+        if (!this.slider || !this.pill) return;
+        const rect = this.slider.getBoundingClientRect();
+        const pillHalf = this.pill.offsetWidth / 2;
+        const rawPx = percent * rect.width;
+        const clampedPx = Math.max(pillHalf, Math.min(rect.width - pillHalf, rawPx));
+        const safePercent = rect.width > 0 ? (clampedPx / rect.width) * 100 : percent * 100;
+        this.pill.style.left = `${safePercent}%`;
+    }
+
+    rebuildTickElements(count) {
+        this.slider.innerHTML = '';
+        this.ticks = [];
+        for (let i = 0; i < count; i++) {
+            const tick = document.createElement('div');
+            tick.className = 'tick';
+            tick.dataset.index = i;
+            this.slider.appendChild(tick);
+            this.ticks.push(tick);
+        }
+    }
+
+    recalculateTickDensity() {
+        if (!this.slider) return;
+        const sliderRect = this.slider.getBoundingClientRect();
+        const container = this.slider.parentElement;
+        const containerRect = container ? container.getBoundingClientRect() : sliderRect;
+        const styles = container ? window.getComputedStyle(container) : null;
+        const paddingLeft = styles ? parseFloat(styles.paddingLeft || '0') : 0;
+        const paddingRight = styles ? parseFloat(styles.paddingRight || '0') : 0;
+        const availableWidth = Math.max(0, containerRect.width - paddingLeft - paddingRight);
+        if (!availableWidth) return;
+
+        const desiredSpacing = 10; // px per tick target (slightly denser)
+        const minTicks = 64;       // denser floor to avoid visible gaps
+        const maxTicks = 112;      // allow a few extra when space permits
+
+        let count = Math.ceil(availableWidth / desiredSpacing) + 1;
+        count = Math.max(minTicks, Math.min(maxTicks, count));
+        count = Math.round(count / 4) * 4; // keep in 4s for even spacing
+
+        if (count !== this.tickCount || this.ticks.length !== count) {
+            this.tickCount = count;
+            this.rebuildTickElements(count);
+        }
+
+        this.updateTickStates();
+        // Re-clamp pill after width changes
+        const percent = Math.max(0, Math.min(1, this.currentMinutes / 1439));
+        this.setSliderPosition(percent);
     }
 
     updateResetButtonVisibility() {
         const now = new Date();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
-        const sliderMinutes = parseInt(this.slider.value);
 
         // Show button if time differs from current by more than 1 minute
-        if (Math.abs(sliderMinutes - currentMinutes) > 1) {
+        if (Math.abs(this.currentMinutes - currentMinutes) > 1) {
             this.resetBtn.classList.add('visible');
         } else {
             this.resetBtn.classList.remove('visible');
@@ -200,10 +396,9 @@ class SunVisualization {
     updatePillVisibility() {
         const now = new Date();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
-        const sliderMinutes = parseInt(this.slider.value);
 
         // Hide pill if at current time (within 1 minute)
-        if (Math.abs(sliderMinutes - currentMinutes) <= 1) {
+        if (Math.abs(this.currentMinutes - currentMinutes) <= 1) {
             this.pill.classList.add('hidden');
         } else {
             this.pill.classList.remove('hidden');
@@ -216,10 +411,9 @@ class SunVisualization {
             if (!this.isUserInteracting) {
                 const now = new Date();
                 const currentMinutes = now.getHours() * 60 + now.getMinutes();
-                const sliderMinutes = parseInt(this.slider.value);
 
                 // Only auto-update if slider is at current time (within 1 minute)
-                if (Math.abs(sliderMinutes - currentMinutes) <= 1) {
+                if (Math.abs(this.currentMinutes - currentMinutes) <= 1) {
                     this.resetToCurrentTime();
                     console.log('[SunViz] Auto-updated to current time');
                 }
@@ -234,8 +428,24 @@ class SunVisualization {
         this.lat = lat;
         this.lon = lon;
         console.log('[SunViz] Sun times set:', sunrise, sunset, times);
+
+        // Pre-calculate the full day arc path
+        this.arcPath = this.calculateFullDayArc();
+
+        // Update event markers positions
+        this.updateEventMarkers();
+
+        // Update tick states with new solar times
+        if (this.ticks && this.ticks.length > 0) {
+            this.updateTickStates();
+        }
+
         latestSunTimes = { sunrise, sunset, times, lat, lon };
-        refreshBackgroundScene();
+        if (typeof scheduleBackgroundRefresh === 'function') {
+            scheduleBackgroundRefresh();
+        } else if (typeof refreshBackgroundScene === 'function') {
+            refreshBackgroundScene();
+        }
         this.updateSolarEventCountdown();
         this.render();
     }
@@ -285,6 +495,66 @@ class SunVisualization {
             console.warn('[SunViz] Failed to get sun position:', e);
             return null;
         }
+    }
+
+    mapAzimuthToX(azimuth, width) {
+        // Convert azimuth (radians: 0=N, π/2=E, π=S, 3π/2=W) to canvas X coordinate
+        // Map with padding on edges for a more bell-shaped curve
+        const azimuthDeg = azimuth * (180 / Math.PI);
+        const normalizedAzimuth = (azimuthDeg + 90) % 360;
+
+        // Add 10% padding on each side to keep arc more centered
+        const padding = width * 0.1;
+        const usableWidth = width - (padding * 2);
+        return padding + (normalizedAzimuth / 180) * usableWidth;
+    }
+
+    mapAltitudeToY(altitude, height, sunPathBottom) {
+        // Map altitude (radians) to canvas Y coordinate
+        // -20° → bottom (below horizon), 90° → top (zenith)
+        const altitudeDeg = altitude * (180 / Math.PI);
+        const minAltitude = -20;
+        const maxAltitude = 90;
+        const altitudeRange = maxAltitude - minAltitude;
+
+        // Normalize altitude to 0-1 range
+        const normalizedAltitude = (altitudeDeg - minAltitude) / altitudeRange;
+
+        // Map to Y position (inverted because Y increases downward)
+        const maxDisplayHeight = sunPathBottom - 20;
+        const minDisplayY = 20;
+        return sunPathBottom - (normalizedAltitude * (maxDisplayHeight - minDisplayY));
+    }
+
+    calculateFullDayArc() {
+        if (!this.lat || !this.lon) return [];
+
+        const arcPoints = [];
+        const dayStart = new Date();
+        dayStart.setHours(0, 0, 0, 0);
+
+        // Calculate UI element heights to avoid overlap (same as in render())
+        const bottomUIHeight = 60;
+        const sunPathBottom = this.height - bottomUIHeight;
+
+        // Sample every 15 minutes for smooth arc (96 points per day)
+        for (let minutes = 0; minutes < 1440; minutes += 15) {
+            const time = new Date(dayStart);
+            time.setMinutes(minutes);
+
+            const position = SunCalc.getPosition(time, this.lat, this.lon);
+            arcPoints.push({
+                x: this.mapAzimuthToX(position.azimuth, this.width),
+                y: this.mapAltitudeToY(position.altitude, this.height, sunPathBottom),
+                time: time,
+                altitude: position.altitude * (180 / Math.PI),
+                azimuth: position.azimuth * (180 / Math.PI),
+                minutes: minutes
+            });
+        }
+
+        console.log('[SunViz] Calculated arc path with', arcPoints.length, 'points');
+        return arcPoints;
     }
 
     getBackgroundColors(time) {
@@ -382,6 +652,238 @@ class SunVisualization {
         };
     }
 
+    renderArcPath(ctx, arcPoints, currentMinutes) {
+        if (!arcPoints || arcPoints.length === 0) return;
+
+        // Split arc into: past (12am → now), current position, future (now → 11:59pm)
+        const pastPoints = arcPoints.filter(p => p.minutes < currentMinutes);
+        const futurePoints = arcPoints.filter(p => p.minutes > currentMinutes);
+
+        // Draw past arc (accent color, 30% opacity)
+        if (pastPoints.length > 1) {
+            // Get CSS accent color
+            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+            ctx.strokeStyle = `color-mix(in srgb, ${accentColor} 30%, transparent)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(pastPoints[0].x, pastPoints[0].y);
+            pastPoints.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.stroke();
+        }
+
+        // Draw future arc (dashed, white, 15% opacity)
+        if (futurePoints.length > 1) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 10]);
+            ctx.beginPath();
+            ctx.moveTo(futurePoints[0].x, futurePoints[0].y);
+            futurePoints.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+
+    renderTimeMarkers(ctx, arcPoints, mouseX, mouseY) {
+        if (!arcPoints || arcPoints.length === 0) return;
+
+        const markerTimes = [6 * 60, 9 * 60, 12 * 60, 15 * 60, 18 * 60, 21 * 60]; // Minutes
+        const hoverRadius = 50; // Pixels - distance to show label
+
+        markerTimes.forEach(minutes => {
+            const point = arcPoints.find(p => Math.abs(p.minutes - minutes) < 15);
+            if (!point) return;
+
+            // Always draw marker dot
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Show label if mouse is near
+            const distance = Math.sqrt(Math.pow(mouseX - point.x, 2) + Math.pow(mouseY - point.y, 2));
+            if (distance < hoverRadius) {
+                const hours = Math.floor(minutes / 60);
+                const label = hours === 0 ? '12 AM' : hours === 12 ? '12 PM' : hours > 12 ? `${hours - 12} PM` : `${hours} AM`;
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                ctx.font = '600 12px system-ui, -apple-system';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+
+                // Add subtle shadow for readability
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 1;
+
+                ctx.fillText(label, point.x, point.y - 12);
+
+                // Reset shadow
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+            }
+        });
+    }
+
+    renderHorizonGlow(ctx, sunX, sunY, altitude, horizonY, width) {
+        // Only render when sun is near horizon
+        if (altitude > 10 || altitude < -5) return;
+
+        // Intensity based on proximity to horizon
+        const glowIntensity = Math.max(0, 1 - Math.abs(altitude) / 10);
+
+        // Red-orange atmospheric glow centered on sun X position
+        const glowGradient = ctx.createRadialGradient(sunX, horizonY, 0, sunX, horizonY, 200);
+        glowGradient.addColorStop(0, `rgba(255, 100, 40, ${glowIntensity * 0.35})`);
+        glowGradient.addColorStop(0.4, `rgba(255, 140, 60, ${glowIntensity * 0.2})`);
+        glowGradient.addColorStop(0.7, `rgba(255, 180, 80, ${glowIntensity * 0.1})`);
+        glowGradient.addColorStop(1, 'rgba(255, 200, 100, 0)');
+
+        ctx.fillStyle = glowGradient;
+        ctx.fillRect(0, horizonY - 200, width, 200);
+    }
+
+    renderMoon(ctx, time, lat, lon, width, height, sunPathBottom) {
+        if (!lat || !lon || typeof SunCalc === 'undefined') return;
+
+        try {
+            const moonPos = SunCalc.getMoonPosition(time, lat, lon);
+            const altitudeDeg = moonPos.altitude * (180 / Math.PI);
+
+            // Only render moon if it's above horizon
+            if (altitudeDeg < -5) return;
+
+            const moonX = this.mapAzimuthToX(moonPos.azimuth, width);
+            const moonY = this.mapAltitudeToY(moonPos.altitude, height, sunPathBottom);
+
+            // Get moon illumination for phase visualization
+            const moonIllum = SunCalc.getMoonIllumination(time);
+            const fraction = moonIllum.fraction;
+
+            // Draw moon glow (subtle, bluish-white)
+            const glowSize = 25;
+            const glowGradient = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, glowSize);
+            glowGradient.addColorStop(0, `rgba(220, 230, 255, ${fraction * 0.4})`);
+            glowGradient.addColorStop(0.5, `rgba(200, 215, 245, ${fraction * 0.2})`);
+            glowGradient.addColorStop(1, 'rgba(180, 200, 235, 0)');
+
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(moonX, moonY, glowSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw moon core
+            const moonSize = 12;
+            const moonGradient = ctx.createRadialGradient(moonX - 3, moonY - 3, 0, moonX, moonY, moonSize);
+            moonGradient.addColorStop(0, '#ffffff');
+            moonGradient.addColorStop(0.6, '#e8e8f0');
+            moonGradient.addColorStop(1, '#d0d0e0');
+
+            ctx.fillStyle = moonGradient;
+            ctx.beginPath();
+            ctx.arc(moonX, moonY, moonSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Add phase shadow if not full moon
+            if (fraction < 0.95) {
+                const shadowPhase = moonIllum.phase;
+                const shadowX = moonX + (shadowPhase < 0.5 ? -moonSize * (1 - fraction * 2) : moonSize * (1 - (1 - fraction) * 2));
+
+                ctx.fillStyle = 'rgba(10, 15, 30, 0.7)';
+                ctx.beginPath();
+                ctx.arc(shadowX, moonY, moonSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } catch (e) {
+            // Silently fail if moon calculation errors
+            console.warn('[SunViz] Failed to render moon:', e);
+        }
+    }
+
+
+    updateEventMarkers() {
+        if (!this.times) return;
+
+        const toPercent = (time) => {
+            const hours = time.getHours();
+            const minutes = time.getMinutes();
+            return ((hours * 60 + minutes) / 1439) * 100;
+        };
+
+        const markerSunrise = document.getElementById('markerSunrise');
+        const markerNoon = document.getElementById('markerNoon');
+        const markerSunset = document.getElementById('markerSunset');
+
+        if (markerSunrise) markerSunrise.style.left = `${toPercent(this.sunrise)}%`;
+        if (markerNoon) markerNoon.style.left = `${toPercent(this.times.solarNoon)}%`;
+        if (markerSunset) markerSunset.style.left = `${toPercent(this.sunset)}%`;
+
+        console.log('[SunViz] Updated event markers');
+    }
+
+    updateTickStates() {
+        if (!this.ticks || this.ticks.length === 0) return;
+
+        // Calculate which tick represents the current position
+        const currentPercent = this.currentMinutes / 1439;
+        const currentTickIndex = Math.round(currentPercent * (this.tickCount - 1));
+
+        // Get solar event positions in tick indices
+        const solarEvents = {};
+        if (this.sunrise && this.times) {
+            solarEvents.sunrise = Math.round((this.sunrise.getHours() * 60 + this.sunrise.getMinutes()) / 1439 * (this.tickCount - 1));
+            solarEvents.noon = Math.round((this.times.solarNoon.getHours() * 60 + this.times.solarNoon.getMinutes()) / 1439 * (this.tickCount - 1));
+            solarEvents.sunset = Math.round((this.sunset.getHours() * 60 + this.sunset.getMinutes()) / 1439 * (this.tickCount - 1));
+        }
+
+        // Update each tick
+        this.ticks.forEach((tick, i) => {
+            // Calculate distance from current position for bell curve
+            const distance = Math.abs(i - currentTickIndex);
+
+            // Bell curve calculation: Gaussian-like distribution
+            // Peak height at current position (28px), tapers to base height (8px)
+            const maxHeight = 28;
+            const baseHeight = 8;
+            const curveWidth = 8; // How many ticks wide the curve should be (reduced for tighter curve)
+
+            // Gaussian-like falloff
+            const heightMultiplier = Math.exp(-(distance * distance) / (2 * curveWidth * curveWidth));
+            const height = baseHeight + (maxHeight - baseHeight) * heightMultiplier;
+
+            tick.style.height = `${height}px`;
+
+            // Reset classes
+            tick.classList.remove('active', 'sunrise-event', 'noon-event', 'sunset-event', 'event-pulse');
+
+            // Mark ticks that form the bell curve (within curve width)
+            if (distance <= curveWidth) {
+                tick.classList.add('active');
+            }
+
+            // Add solar event styling to ticks near events (±2 ticks)
+            if (solarEvents.sunrise && Math.abs(i - solarEvents.sunrise) <= 2) {
+                tick.classList.add('sunrise-event');
+                if (Math.abs(i - solarEvents.sunrise) <= 1) {
+                    tick.classList.add('event-pulse');
+                }
+            }
+            if (solarEvents.noon && Math.abs(i - solarEvents.noon) <= 2) {
+                tick.classList.add('noon-event');
+                if (Math.abs(i - solarEvents.noon) <= 1) {
+                    tick.classList.add('event-pulse');
+                }
+            }
+            if (solarEvents.sunset && Math.abs(i - solarEvents.sunset) <= 2) {
+                tick.classList.add('sunset-event');
+                if (Math.abs(i - solarEvents.sunset) <= 1) {
+                    tick.classList.add('event-pulse');
+                }
+            }
+        });
+    }
+
     render() {
         const ctx = this.ctx;
         const w = this.width;
@@ -441,6 +943,13 @@ class SunVisualization {
         const bottomUIHeight = 60;
         const sunPathBottom = h - bottomUIHeight;
 
+        // Draw arc path before horizon line and sun
+        const currentMinutes = this.displayTime.getHours() * 60 + this.displayTime.getMinutes();
+        this.renderArcPath(ctx, this.arcPath, currentMinutes);
+
+        // Draw time markers (hover-reveal)
+        this.renderTimeMarkers(ctx, this.arcPath, this.mouseX, this.mouseY);
+
         // Draw horizon line
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
         ctx.lineWidth = 1;
@@ -450,50 +959,32 @@ class SunVisualization {
         ctx.stroke();
 
         if (sunProgress !== null) {
-            // Draw vertical reference line showing sun's path
-            const maxArcHeight = h * 0.45; // Max height for visibility
+            // Calculate sun position using actual astronomical azimuth and altitude
+            let sunX, sunY, altitudeDeg;
 
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 10]);
+            if (this.lat && this.lon) {
+                const position = SunCalc.getPosition(this.displayTime, this.lat, this.lon);
 
-            // Draw single vertical line at center where sun travels
-            // Stop before bottom UI elements
-            const sunPathX = w / 2;
-            ctx.beginPath();
-            ctx.moveTo(sunPathX, 0);
-            ctx.lineTo(sunPathX, sunPathBottom);
-            ctx.stroke();
+                // Use azimuth for horizontal position (arc-based movement)
+                sunX = this.mapAzimuthToX(position.azimuth, w);
 
-            ctx.setLineDash([]);
+                // Use altitude for vertical position
+                sunY = this.mapAltitudeToY(position.altitude, h, sunPathBottom);
 
-            // Calculate sun position using actual astronomical altitude
-            let sunX, sunY;
-            const realAltitude = this.getSunAltitude(this.displayTime, this.lat, this.lon);
-
-            // Sun stays at a fixed X position (center of canvas)
-            sunX = w / 2;
-
-            if (realAltitude !== null && this.lat && this.lon) {
-                // Calculate Y position directly from altitude (straight vertical movement)
-                // Map altitude range (-20° to 90°) to display height
-                const minAltitude = -20; // Below horizon
-                const maxAltitude = 90;  // Directly overhead
-                const altitudeRange = maxAltitude - minAltitude;
-
-                // Normalize altitude to 0-1 range
-                const normalizedAltitude = (realAltitude - minAltitude) / altitudeRange;
-
-                // Map to Y position (inverted because Y increases downward)
-                // When altitude is -20°, sun is at bottom (but not below UI elements)
-                // When altitude is 90°, sun is at maximum height
-                const maxDisplayHeight = sunPathBottom - 20; // Leave margin from top
-                const minDisplayY = 20; // Top margin
-                sunY = sunPathBottom - (normalizedAltitude * (maxDisplayHeight - minDisplayY));
+                // Store altitude in degrees for horizon glow
+                altitudeDeg = position.altitude * (180 / Math.PI);
             } else {
                 // Fallback if position unavailable
+                sunX = w / 2;
                 sunY = horizonY;
+                altitudeDeg = 0;
             }
+
+            // Render horizon glow when sun is near horizon
+            this.renderHorizonGlow(ctx, sunX, sunY, altitudeDeg, horizonY, w);
+
+            // Render moon if visible
+            this.renderMoon(ctx, this.displayTime, this.lat, this.lon, w, h, sunPathBottom);
 
             // Calculate dynamic glow based on proximity to horizon
             const isBelowHorizon = sunY > horizonY;

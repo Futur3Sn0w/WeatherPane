@@ -1,16 +1,21 @@
 /* Sun visualization pane */
 .sun-viz {
-    position: fixed;
-    top: 70px;
+    position: sticky;
+    top: 0;
     border: 1px solid var(--line);
-    border-radius: var(--radius);
+    border-radius: var(--radius-2xl);
     box-shadow: var(--shadow);
+    backdrop-filter: var(--blur-md) saturate(125%);
+    -webkit-backdrop-filter: var(--blur-md) saturate(125%);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-width: 37%;
-    height: calc(100vh - 140px);
+    width: 100%;
+    min-height: 520px;
+    height: 100%;
+    max-height: 920px;
     align-self: flex-start;
+    isolation: isolate;
 }
 
 .sun-viz-background {
@@ -20,7 +25,7 @@
     right: 0;
     bottom: 0;
     z-index: 1;
-    transition: background 1s ease;
+    transition: background var(--transition-slower) ease;
 }
 
 .sun-viz-content {
@@ -29,26 +34,38 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 0;
     min-height: 0;
+}
+
+.sun-viz-shell {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0;
+    transition: opacity var(--transition-slow) var(--ease-out),
+        transform var(--transition-slow) var(--ease-out);
 }
 
 .current-time-display {
     position: absolute;
-    top: 30px;
+    top: var(--space-8);
     left: 50%;
     transform: translateX(-50%);
-    font-size: 14px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--text-3xl);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
     z-index: 10;
     pointer-events: none;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 .solar-event-countdown {
     position: absolute;
-    top: 52px;
+    top: 72px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
@@ -56,21 +73,21 @@
     text-align: center;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--space-1);
 }
 
 .solar-event-countdown .event-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 .solar-event-countdown .event-time {
-    font-size: 11px;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.6);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-size: var(--text-xl);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.65);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 @media (max-width: 960px) {
@@ -78,9 +95,125 @@
         position: relative;
         top: auto;
         flex: 0 0 auto;
-        height: 400px;
+        height: 440px;
+        min-height: 440px;
         align-self: stretch;
     }
+}
+
+.sun-detail-overlay {
+    position: absolute;
+    inset: var(--space-5);
+    background: linear-gradient(160deg,
+            color-mix(in srgb, var(--card) 82%, transparent 18%),
+            color-mix(in srgb, var(--card-solid) 60%, transparent 40%));
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-2xl);
+    backdrop-filter: var(--blur-lg);
+    -webkit-backdrop-filter: var(--blur-lg);
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(var(--space-2));
+    transition: opacity var(--transition-slow) var(--ease-out),
+        transform var(--transition-slow) var(--ease-out);
+}
+
+@media (max-width: 960px) {
+    .sun-detail-overlay {
+        inset: var(--space-4);
+        padding: var(--space-4);
+    }
+}
+
+.sun-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+.sun-detail-sub {
+    margin: var(--space-1) 0 0;
+    color: var(--muted);
+}
+
+.sun-detail-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.sun-detail-overlay .card-detail {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    max-height: none;
+    height: 100%;
+    margin: 0;
+    border-radius: var(--radius-xl);
+    box-shadow: none;
+}
+
+.sun-detail-overlay .detail-grid {
+    max-width: 100%;
+}
+
+.sun-detail-close {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-full);
+    background: color-mix(in srgb, var(--card) 60%, transparent);
+    color: var(--text);
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast) var(--ease-out);
+    box-shadow: var(--shadow-sm);
+}
+
+.sun-detail-close:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.sun-detail-close:active {
+    transform: translateY(0);
+}
+
+.sun-detail-empty {
+    margin: 0;
+    color: var(--muted);
+}
+
+.sun-detail-active #sunViz .sun-viz-shell {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(var(--space-2));
+}
+
+.sun-detail-active #sunDetailOverlay {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.sun-detail-active #sunViz {
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--line) 70%);
+    box-shadow: var(--shadow-xl), var(--shadow-colored);
 }
 
 #starCanvas,
@@ -102,85 +235,135 @@
 }
 
 .time-slider-container {
-    position: relative;
-    margin-top: auto;
-    padding-top: 30px;
-    padding-bottom: 10px;
+    position: absolute;
+    left: var(--space-5);
+    right: var(--space-5);
+    bottom: var(--space-4);
+    padding-top: var(--space-5);
+    padding-bottom: var(--space-2);
     z-index: 10;
-    /* Ensure slider and pill appear above canvas */
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
 }
 
+/* Tick-based slider */
 #timeSlider {
     width: 100%;
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.1);
+    max-width: 100%;
+    height: 30px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    cursor: pointer;
     outline: none;
-    -webkit-appearance: none;
-    appearance: none;
+    user-select: none;
 }
 
-#timeSlider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
+#timeSlider:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: var(--radius-sm);
+}
+
+/* Individual tick mark */
+.tick {
+    flex: 1;
+    min-width: 2px;
+    max-width: 5px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    transition: height 0.15s cubic-bezier(0.4, 0.0, 0.2, 1),
+        background 0.15s ease,
+        opacity 0.15s ease;
+    position: relative;
+    will-change: height, background;
+}
+
+/* Ticks that form the bell curve (active region) */
+.tick.active {
     background: var(--accent);
-    cursor: pointer;
-    box-shadow: 0 0 12px var(--accent);
-    transition: none;
+    opacity: 0.8;
 }
 
-#timeSlider.smooth-transition::-webkit-slider-thumb {
-    transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+/* Cursor proximity gradient effect */
+.tick.near-cursor {
+    background: color-mix(in srgb, var(--accent) 70%, white 30%);
+    opacity: 1;
 }
 
-#timeSlider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 0 12px var(--accent);
-    transition: none;
+/* Ticks at solar events get special coloring */
+.tick.sunrise-event,
+.tick.sunset-event {
+    background: color-mix(in srgb, var(--accent-2) 60%, transparent);
 }
 
-#timeSlider.smooth-transition::-moz-range-thumb {
-    transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+.tick.noon-event {
+    background: color-mix(in srgb, var(--accent) 80%, white 20%);
+}
+
+/* Pulsing animation for ticks near solar events */
+@keyframes tick-pulse {
+
+    0%,
+    100% {
+        opacity: 0.7;
+    }
+
+    50% {
+        opacity: 1;
+        transform: scaleY(1.1);
+    }
+}
+
+.tick.event-pulse {
+    animation: tick-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tick {
+        transition: none;
+    }
+
+    .tick.event-pulse {
+        animation: none !important;
+    }
 }
 
 .time-pill {
     position: absolute;
     top: 0;
     left: 0;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: var(--text-sm);
+    font-weight: 700;
     color: var(--text);
-    background: rgba(78, 163, 255, 0.2);
+    background: color-mix(in srgb, var(--accent) 25%, transparent);
+    backdrop-filter: var(--blur-md);
+    -webkit-backdrop-filter: var(--blur-md);
     border: 1px solid var(--accent);
-    padding: 4px 10px;
-    border-radius: 999px;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
     transform: translateX(-50%);
     white-space: nowrap;
-    transition: left 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
-        opacity 0.3s ease,
-        transform 0.3s ease;
+    box-shadow: var(--shadow-sm), 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent);
+    transition: left var(--transition-slow) var(--ease-out),
+        opacity var(--transition-slow) ease,
+        transform var(--transition-slow) ease;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
 }
 
 .time-pill.no-transition {
-    transition: opacity 0.3s ease,
-        transform 0.3s ease;
-    /* Keep opacity and transform transitions, but disable left transition */
+    transition: opacity var(--transition-slow) ease,
+        transform var(--transition-slow) ease;
 }
 
 .time-pill.hidden {
     opacity: 0;
-    transform: translateX(-50%) translateY(10px);
+    transform: translateX(-50%) translateY(var(--space-3));
 }
 
 .time-text {
@@ -188,13 +371,13 @@
 }
 
 .time-reset-btn {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: var(--accent);
     border: none;
-    color: #001527;
-    font-size: 14px;
+    color: var(--accent-content);
+    font-size: var(--text-sm);
     line-height: 1;
     cursor: pointer;
     display: flex;
@@ -204,8 +387,10 @@
     flex-shrink: 0;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease, background 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: opacity var(--transition-base) ease,
+        background var(--transition-base) ease,
+        transform var(--transition-base) ease;
+    box-shadow: var(--shadow-sm);
 }
 
 .time-reset-btn.visible {
@@ -214,5 +399,74 @@
 }
 
 .time-reset-btn:hover {
-    background: #5eb3ff;
+    background: color-mix(in srgb, var(--accent) 90%, white 10%);
+    transform: scale(1.12);
+}
+
+.time-reset-btn:active {
+    transform: scale(0.96);
+}
+
+/* Solar event markers */
+.solar-event-markers {
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 5px;
+    pointer-events: none;
+    z-index: 9;
+}
+
+.solar-event-markers .marker {
+    position: absolute;
+    width: 2px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.35);
+    transform: translateX(-50%) translateY(-50%);
+    border-radius: 1px;
+    transition: background var(--transition-base) ease, height var(--transition-base) ease;
+}
+
+.solar-event-markers .marker.sunrise,
+.solar-event-markers .marker.sunset {
+    background: color-mix(in srgb, var(--accent-2) 50%, transparent);
+}
+
+.solar-event-markers .marker.noon {
+    background: color-mix(in srgb, var(--accent) 55%, transparent);
+    height: 14px;
+}
+
+/* Pulsing thumb animation at solar events */
+@keyframes solar-event-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 12px var(--accent);
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 24px var(--accent),
+            0 0 36px color-mix(in srgb, var(--accent) 40%, transparent);
+        transform: scale(1.1);
+    }
+}
+
+#timeSlider.at-event::-webkit-slider-thumb {
+    animation: solar-event-pulse 2s var(--ease-out) infinite;
+}
+
+#timeSlider.at-event::-moz-range-thumb {
+    animation: solar-event-pulse 2s var(--ease-out) infinite;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+    #timeSlider.at-event::-webkit-slider-thumb,
+    #timeSlider.at-event::-moz-range-thumb {
+        animation: none !important;
+    }
 }

@@ -17,6 +17,8 @@ const SCENE_DATA = [
 
 let currentSceneIndex = 0;
 let previewManager = null;
+let activeTabId = 'appearance';
+let navIndicatorFrame = null;
 
 // Theme management functions
 function getThemeMode() {
@@ -52,8 +54,8 @@ function applyTheme() {
 
     console.log('[Theme] Applied:', { mode, color, effectiveMode });
 
-    if (typeof refreshBackgroundScene === 'function') {
-        refreshBackgroundScene();
+    if (typeof scheduleBackgroundRefresh === 'function') {
+        scheduleBackgroundRefresh();
     }
 }
 
@@ -119,79 +121,9 @@ function updatePreviewScene() {
         const context = computeSceneContext();
         const sceneValue = scene.value;
 
-        if (sceneValue && sceneValue !== 'auto') {
-            // Apply the same logic from scene-manager.js
-            switch (sceneValue) {
-                case 'clear':
-                    context.sceneId = 'clear-day';
-                    context.variant = 'rain';
-                    context.intensity = 0.45;
-                    context.cloudCover = 5;
-                    context.isNight = false;
-                    break;
-                case 'partly-cloudy':
-                    context.sceneId = 'cloudy';
-                    context.variant = 'rain';
-                    context.intensity = 0.75;
-                    context.cloudCover = 30;
-                    context.isNight = false;
-                    break;
-                case 'cloudy':
-                    context.sceneId = 'cloudy';
-                    context.variant = 'rain';
-                    context.intensity = 0.8;
-                    context.cloudCover = 55;
-                    context.isNight = false;
-                    break;
-                case 'mostly-cloudy':
-                    context.sceneId = 'cloudy';
-                    context.variant = 'rain';
-                    context.intensity = 0.85;
-                    context.cloudCover = 75;
-                    context.isNight = false;
-                    break;
-                case 'overcast':
-                    context.sceneId = 'cloudy';
-                    context.variant = 'rain';
-                    context.intensity = 0.95;
-                    context.cloudCover = 95;
-                    context.isNight = false;
-                    break;
-                case 'rain':
-                    context.sceneId = 'rain';
-                    context.variant = 'rain';
-                    context.intensity = 0.9;
-                    context.cloudCover = 90;
-                    context.isNight = false;
-                    break;
-                case 'storm':
-                    context.sceneId = 'storm';
-                    context.variant = 'rain';
-                    context.intensity = 1.0;
-                    context.cloudCover = 95;
-                    context.isNight = false;
-                    break;
-                case 'snow':
-                    context.sceneId = 'rain';
-                    context.variant = 'snow';
-                    context.intensity = 0.85;
-                    context.cloudCover = 85;
-                    context.isNight = false;
-                    break;
-                case 'night':
-                    context.sceneId = 'night-clear';
-                    context.variant = 'rain';
-                    context.intensity = 0.6;
-                    context.cloudCover = 10;
-                    context.isNight = true;
-                    break;
-            }
-            context.forcedScene = sceneValue;
-        } else {
-            context.forcedScene = 'auto';
-        }
+        const resolvedContext = resolveForcedSceneContext(context, sceneValue);
 
-        previewManager.setScene(context.sceneId, context);
+        previewManager.setScene(resolvedContext.sceneId, resolvedContext);
 
         // Apply cloud state from settings
         const cloudState = getCloudSetting();
@@ -206,8 +138,8 @@ function updatePreviewScene() {
     setForcedSceneSetting(scene.value);
 
     // Update main background
-    if (typeof refreshBackgroundScene === 'function') {
-        refreshBackgroundScene();
+    if (typeof scheduleBackgroundRefresh === 'function') {
+        scheduleBackgroundRefresh();
     }
 }
 
@@ -221,6 +153,110 @@ function prevScene() {
     currentSceneIndex = (currentSceneIndex - 1 + SCENE_DATA.length) % SCENE_DATA.length;
     updatePreviewScene();
     updatePreviewDots();
+}
+
+// Responsive settings navigation
+function updateNavIndicator() {
+    const $indicator = $('#settingsNavIndicator');
+    const $active = $('.settings-nav-item.active');
+    const $scroll = $('#settingsNavScroll');
+
+    if (!$indicator.length || !$active.length || !$scroll.length) return;
+
+    const activeRect = $active[0].getBoundingClientRect();
+    const scrollRect = $scroll[0].getBoundingClientRect();
+
+    const left = activeRect.left - scrollRect.left;
+    const top = activeRect.top - scrollRect.top;
+
+    $indicator.css({
+        width: activeRect.width + 'px',
+        height: activeRect.height + 'px',
+        transform: `translate(${left}px, ${top}px)`
+    });
+}
+
+function switchTab(tabId, options = {}) {
+    activeTabId = tabId;
+    const $buttons = $('.settings-nav-item');
+    const $panels = $('.settings-panel');
+
+    $buttons.removeClass('active').attr('aria-selected', 'false');
+    const $activeButton = $buttons.filter(`[data-tab-target="${tabId}"]`);
+    $activeButton.addClass('active').attr('aria-selected', 'true');
+
+    $panels.removeClass('active').attr('aria-hidden', 'true');
+    const $panel = $panels.filter(`[data-tab-id="${tabId}"]`);
+    $panel.addClass('active').attr('aria-hidden', 'false');
+
+    if (tabId === 'background') {
+        setTimeout(initBackgroundPreview, 120);
+    } else if (tabId === 'cards') {
+        populateCardList();
+    }
+
+    if (!options.skipIndicator) {
+        updateNavIndicator();
+    }
+
+    if ($activeButton.length) {
+        $activeButton[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+}
+
+// Build navigation dynamically from available panels so new tabs auto-register
+function buildSettingsNav() {
+    const $scroll = $('#settingsNavScroll');
+    const $panels = $('.settings-panel');
+
+    if (!$scroll.length || !$panels.length) return;
+
+    $scroll.find('.settings-nav-item').remove();
+
+    let firstTabId = null;
+
+    $panels.each(function() {
+        const $panel = $(this);
+        const tabId = $panel.data('tab-id');
+        const label = $panel.data('label') || 'Section';
+        const icon = $panel.data('icon') || 'fa-gear';
+        const badge = $panel.data('badge');
+
+        if (!$panel.attr('id')) {
+            $panel.attr('id', `${tabId}Tab`);
+        }
+
+        $panel.attr({
+            role: 'tabpanel',
+            'aria-hidden': !$panel.hasClass('active')
+        });
+
+        if ($panel.hasClass('active')) {
+            activeTabId = tabId;
+        }
+
+        if (!firstTabId) {
+            firstTabId = tabId;
+        }
+
+        const $btn = $(`
+            <button class="settings-nav-item" role="tab" aria-selected="false" aria-controls="${$panel.attr('id')}" data-tab-target="${tabId}">
+                <span class="nav-icon"><i class="fa-solid ${icon}"></i></span>
+                <span class="nav-label">${label}</span>
+                ${badge ? `<span class="nav-badge">${badge}</span>` : ''}
+            </button>
+        `);
+
+        $btn.on('click', () => switchTab(tabId));
+        $scroll.append($btn);
+    });
+
+    if (!activeTabId) {
+        activeTabId = firstTabId;
+    }
+
+    switchTab(activeTabId, { skipIndicator: true });
+    updateNavIndicator();
 }
 
 function initSettings() {
@@ -242,6 +278,8 @@ function initSettings() {
     const $colorOrangeRadio = $('#colorOrange');
     const $colorTealRadio = $('#colorTeal');
     const $colorGreyRadio = $('#colorGrey');
+    const $settingsNavScroll = $('#settingsNavScroll');
+    const $settingsNavIndicator = $('#settingsNavIndicator');
 
     if (!$settingsBtn.length || !$settingsModal.length || !$closeSettingsBtn.length ||
         !$cloudOnRadio.length || !$cloudPausedRadio.length || !$cloudOffRadio.length ||
@@ -249,7 +287,7 @@ function initSettings() {
         !$themeModeAutoRadio.length || !$themeModeLightRadio.length || !$themeModeDarkRadio.length ||
         !$colorBlueRadio.length || !$colorPurpleRadio.length || !$colorPinkRadio.length ||
         !$colorGreenRadio.length || !$colorOrangeRadio.length || !$colorTealRadio.length ||
-        !$colorGreyRadio.length) {
+        !$colorGreyRadio.length || !$settingsNavScroll.length || !$settingsNavIndicator.length) {
         console.warn('[Settings] Settings elements not found');
         return;
     }
@@ -294,11 +332,13 @@ function initSettings() {
         $colorBlueRadio.prop('checked', true);
     }
 
+    buildSettingsNav();
+
     // Open settings modal
     $settingsBtn.on('click', () => {
         $settingsModal.addClass('active');
-        // Update tab indicator position after modal animation
-        setTimeout(updateTabIndicator, 300);
+        // Update nav indicator position after modal animation
+        setTimeout(updateNavIndicator, 250);
     });
 
     // Close settings modal
@@ -381,54 +421,13 @@ function initSettings() {
         }
     });
 
-    // Initialize tab indicator position
-    function updateTabIndicator() {
-        const $activeTab = $('.settings-tab.active');
-        const $indicator = $('.tab-indicator');
-
-        if ($activeTab.length && $indicator.length) {
-            const tabsContainer = $('.settings-tabs');
-            const containerLeft = tabsContainer.offset().left;
-            const tabLeft = $activeTab.offset().left;
-            const tabWidth = $activeTab.outerWidth();
-            const relativeLeft = tabLeft - containerLeft;
-
-            $indicator.css({
-                'left': relativeLeft + 'px',
-                'width': tabWidth + 'px'
-            });
+    // Keep indicator aligned on resize
+    $(window).on('resize', () => {
+        if (navIndicatorFrame) {
+            cancelAnimationFrame(navIndicatorFrame);
         }
-    }
-
-    // Tab switching
-    $('.settings-tab').on('click', function() {
-        const tabName = $(this).data('tab');
-
-        // Update tab buttons
-        $('.settings-tab').removeClass('active');
-        $(this).addClass('active');
-
-        // Animate tab indicator
-        updateTabIndicator();
-
-        // Update tab content
-        $('.settings-tab-content').removeClass('active');
-        if (tabName === 'appearance') {
-            $('#appearanceTab').addClass('active');
-        } else if (tabName === 'background') {
-            $('#backgroundTab').addClass('active');
-            // Initialize preview when tab is opened
-            setTimeout(() => {
-                initBackgroundPreview();
-            }, 100);
-        } else if (tabName === 'cards') {
-            $('#cardsTab').addClass('active');
-            populateCardList();
-        }
+        navIndicatorFrame = requestAnimationFrame(updateNavIndicator);
     });
-
-    // Initialize indicator position on load
-    setTimeout(updateTabIndicator, 50);
 
     console.log('[Settings] Initialized');
 }

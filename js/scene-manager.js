@@ -93,6 +93,16 @@ const SNOW_CODES = new Set([71, 73, 75, 77, 85, 86]);
 const FOG_CODES = new Set([45, 48]);
 const CLOUDY_CODES = new Set([2, 3]);
 
+const BACKGROUND_REFRESH_DEBOUNCE_MS = 150;
+let backgroundRefreshTimer = null;
+
+function scheduleBackgroundRefresh(options) {
+    clearTimeout(backgroundRefreshTimer);
+    backgroundRefreshTimer = setTimeout(() => {
+        refreshBackgroundScene(options);
+    }, BACKGROUND_REFRESH_DEBOUNCE_MS);
+}
+
 // Event listener for prefers-reduced-motion
 if (prefersReducedMotionQuery) {
     const handleMotionPreferenceChange = () => {
@@ -134,6 +144,87 @@ function getForcedSceneSetting() {
 function setForcedSceneSetting(value) {
     localStorage.setItem(BACKGROUND_SCENE_SETTING_KEY, value);
 }
+
+// Shared forced-scene overrides
+const FORCED_SCENE_OVERRIDES = {
+    clear: {
+        sceneId: 'clear-day',
+        variant: 'rain',
+        intensity: 0.45,
+        cloudCover: 5,
+        isNight: false
+    },
+    'partly-cloudy': {
+        sceneId: 'cloudy',
+        variant: 'rain',
+        intensity: 0.75,
+        cloudCover: 30,
+        isNight: false
+    },
+    cloudy: {
+        sceneId: 'cloudy',
+        variant: 'rain',
+        intensity: 0.8,
+        cloudCover: 55,
+        isNight: false
+    },
+    'mostly-cloudy': {
+        sceneId: 'cloudy',
+        variant: 'rain',
+        intensity: 0.85,
+        cloudCover: 75,
+        isNight: false
+    },
+    overcast: {
+        sceneId: 'cloudy',
+        variant: 'rain',
+        intensity: 0.95,
+        cloudCover: 95,
+        isNight: false
+    },
+    rain: {
+        sceneId: 'rain',
+        variant: 'rain',
+        intensity: 0.9,
+        cloudCover: 90,
+        isNight: false
+    },
+    storm: {
+        sceneId: 'storm',
+        variant: 'rain',
+        intensity: 1.0,
+        cloudCover: 95,
+        isNight: false
+    },
+    snow: {
+        sceneId: 'rain',
+        variant: 'snow',
+        intensity: 0.85,
+        cloudCover: 85,
+        isNight: false
+    },
+    night: {
+        sceneId: 'night-clear',
+        variant: 'rain',
+        intensity: 0.6,
+        cloudCover: 10,
+        isNight: true
+    }
+};
+
+function resolveForcedSceneContext(baseContext, forcedScene) {
+    if (!forcedScene || forcedScene === 'auto') {
+        return { ...baseContext, forcedScene: 'auto' };
+    }
+    const override = FORCED_SCENE_OVERRIDES[forcedScene];
+    if (!override) {
+        return { ...baseContext, forcedScene: 'auto' };
+    }
+    return { ...baseContext, ...override, forcedScene };
+}
+
+// Expose for settings preview to reuse
+window.resolveForcedSceneContext = resolveForcedSceneContext;
 
 function destroyCloudAnimation() {
     if (backgroundManager) {
@@ -235,78 +326,8 @@ function refreshBackgroundScene({ fromInit = false } = {}) {
 
     $el.css('display', 'block').removeClass('hiding');
 
-    const context = computeSceneContext();
     const forcedScene = getForcedSceneSetting();
-    if (forcedScene && forcedScene !== 'auto') {
-        switch (forcedScene) {
-            case 'clear':
-                context.sceneId = 'clear-day';
-                context.variant = 'rain';
-                context.intensity = 0.45;
-                context.cloudCover = 5;
-                context.isNight = false;
-                break;
-            case 'partly-cloudy':
-                context.sceneId = 'cloudy';
-                context.variant = 'rain';
-                context.intensity = 0.75;
-                context.cloudCover = 30; // 30% coverage - sparse clouds
-                context.isNight = false;
-                break;
-            case 'cloudy':
-                context.sceneId = 'cloudy';
-                context.variant = 'rain';
-                context.intensity = 0.8;
-                context.cloudCover = 55; // 55% coverage - moderate clouds
-                context.isNight = false;
-                break;
-            case 'mostly-cloudy':
-                context.sceneId = 'cloudy';
-                context.variant = 'rain';
-                context.intensity = 0.85;
-                context.cloudCover = 75; // 75% coverage - nearly full
-                context.isNight = false;
-                break;
-            case 'overcast':
-                context.sceneId = 'cloudy';
-                context.variant = 'rain';
-                context.intensity = 0.95;
-                context.cloudCover = 95; // 95% coverage - complete coverage
-                context.isNight = false;
-                break;
-            case 'rain':
-                context.sceneId = 'rain';
-                context.variant = 'rain';
-                context.intensity = 0.9;
-                context.cloudCover = 90; // Rainy weather usually has high cloud cover
-                context.isNight = false;
-                break;
-            case 'storm':
-                context.sceneId = 'storm';
-                context.variant = 'rain';
-                context.intensity = 1.0; // Maximum intensity for storms
-                context.cloudCover = 95; // Nearly complete cloud coverage
-                context.isNight = false;
-                break;
-            case 'snow':
-                context.sceneId = 'rain';
-                context.variant = 'snow';
-                context.intensity = 0.85;
-                context.cloudCover = 85; // Snowy weather typically has high cloud cover
-                context.isNight = false;
-                break;
-            case 'night':
-                context.sceneId = 'night-clear';
-                context.variant = 'rain';
-                context.intensity = 0.6;
-                context.cloudCover = 10; // Clear night has minimal clouds
-                context.isNight = true;
-                break;
-        }
-        context.forcedScene = forcedScene;
-    } else {
-        context.forcedScene = 'auto';
-    }
+    const context = resolveForcedSceneContext(computeSceneContext(), forcedScene);
 
     if (context.sceneId === 'clear-day') {
         $el.addClass('sunny');
@@ -372,13 +393,13 @@ function setCloudState(state) {
     switch (state) {
         case 'on':
             resumeCloudAnimation();
-            refreshBackgroundScene();
+            scheduleBackgroundRefresh();
             break;
         case 'paused':
             pauseCloudAnimation();
             break;
         case 'off':
-            refreshBackgroundScene();
+            scheduleBackgroundRefresh();
             break;
     }
 }

@@ -3,13 +3,23 @@
 
 // Cache configuration
 const WEATHER_CACHE_KEY_PREFIX = 'weatherPane:weather:';
-const WEATHER_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const WEATHER_CACHE_VERSION = 'v3';
+const WEATHER_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes (fresh)
+const WEATHER_CACHE_STALE_MS = 20 * 60 * 1000; // 20 minutes (stale-but-usable)
+
+const WEATHER_API_BASE = 'https://api.open-meteo.com/v1/forecast';
+const WEATHER_API_PARAMS = {
+    current: 'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m,apparent_temperature,cloud_cover',
+    daily: 'sunrise,sunset,daylight_duration,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max',
+    hourly: 'uv_index,cloud_cover,visibility',
+    timezone: 'auto'
+};
 
 function makeWeatherCacheKey(lat, lon) {
-    return `${WEATHER_CACHE_KEY_PREFIX}${lat.toFixed(3)}:${lon.toFixed(3)}`;
+    return `${WEATHER_CACHE_KEY_PREFIX}${WEATHER_CACHE_VERSION}:${lat.toFixed(3)}:${lon.toFixed(3)}`;
 }
 
-function readWeatherCache(lat, lon) {
+function readWeatherCacheEntry(lat, lon) {
     const key = makeWeatherCacheKey(lat, lon);
     try {
         const raw = localStorage.getItem(key);
@@ -21,17 +31,22 @@ function readWeatherCache(lat, lon) {
             return null;
         }
         const age = Date.now() - entry.timestamp;
-        if (age > WEATHER_CACHE_TTL_MS) {
+        if (age > WEATHER_CACHE_STALE_MS) {
             localStorage.removeItem(key);
-            console.log(`[Weather API] Cache expired for ${lat}, ${lon} (age ${Math.round(age / 1000)}s)`);
             return null;
         }
-        console.log(`[Weather API] Using cached data for ${lat.toFixed(3)}, ${lon.toFixed(3)} (age ${Math.round(age / 1000)}s)`);
-        return entry.data;
+        const isStale = age > WEATHER_CACHE_TTL_MS;
+        console.log(`[Weather API] Using cached data for ${lat.toFixed(3)}, ${lon.toFixed(3)} (age ${Math.round(age / 1000)}s, stale=${isStale})`);
+        return { data: entry.data, isStale };
     } catch (error) {
         console.warn('[Weather API] Failed to read cache', error);
         return null;
     }
+}
+
+function readWeatherCache(lat, lon) {
+    const entry = readWeatherCacheEntry(lat, lon);
+    return entry ? entry.data : null;
 }
 
 function writeWeatherCache(lat, lon, data) {
@@ -104,6 +119,66 @@ let currentHumidity = null;
 let currentWeatherCode = null;
 let currentCloudCover = null;
 let expandedCardId = null;
+
+function buildWeatherRequest(lat, lon) {
+    const url = new URL(WEATHER_API_BASE);
+    const params = {
+        ...WEATHER_API_PARAMS,
+        latitude: lat,
+        longitude: lon
+    };
+    url.search = new URLSearchParams(params).toString();
+    return { url: url.toString(), params };
+}
+
+function validateWeatherResponse(data) {
+    if (!data || typeof data !== 'object') {
+        throw new Error('Weather API returned invalid JSON');
+    }
+    if (!data.current) {
+        throw new Error('Weather API returned incomplete data: missing current weather');
+    }
+    if (!data.daily) {
+        throw new Error('Weather API returned incomplete data: missing daily forecast');
+    }
+    return data;
+}
+
+async function fetchWeather(lat, lon) {
+    const cachedEntry = readWeatherCacheEntry(lat, lon);
+    if (cachedEntry && !cachedEntry.isStale) {
+        return cachedEntry.data;
+    }
+
+    console.log(`[Weather API] Fetching weather for coordinates: ${lat}, ${lon}`);
+    const { url, params } = buildWeatherRequest(lat, lon);
+    console.log(`[Weather API] Request URL: ${url}`);
+    console.log(`[Weather API] Parameters:`, params);
+
+    try {
+        const response = await fetch(url);
+        console.log(`[Weather API] Response status: ${response.status} ${response.statusText}`);
+        console.log(`[Weather API] Response headers:`, Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`[Weather API] Error response body:`, errorText);
+            throw new Error(`Weather API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+
+        const data = validateWeatherResponse(await response.json());
+        console.log(`[Weather API] Success! Timezone: ${data.timezone}, Current temperature: ${data.current.temperature_2m}°C`);
+        writeWeatherCache(lat, lon, data);
+        return data;
+    } catch (error) {
+        console.error(`[Weather API] Fetch error:`, error);
+        if (cachedEntry && cachedEntry.isStale) {
+            console.warn('[Weather API] Using stale cached data due to fetch failure');
+            return cachedEntry.data;
+        }
+        throw error;
+    }
+}
 
 function celsiusToFahrenheit(celsius) {
     return (celsius * 9 / 5) + 32;

@@ -189,7 +189,15 @@ class CanvasScene {
         this.running = false;
         this.frameId = null;
         this.lastTimestamp = performance.now();
-        this.handleResize = this.resize.bind(this);
+        this.resizeQueued = false;
+        this.handleResize = () => {
+            if (this.resizeQueued) return;
+            this.resizeQueued = true;
+            requestAnimationFrame(() => {
+                this.resizeQueued = false;
+                this.resize();
+            });
+        };
         window.addEventListener('resize', this.handleResize);
         this.resize();
     }
@@ -492,7 +500,15 @@ class CloudyScene {
         this.cloudEngine = new ThreeJSVolumetricClouds(container, this.options);
 
         // Bind resize handler
-        this.handleResize = this.resize.bind(this);
+        this.resizeQueued = false;
+        this.handleResize = () => {
+            if (this.resizeQueued) return;
+            this.resizeQueued = true;
+            requestAnimationFrame(() => {
+                this.resizeQueued = false;
+                this.resize();
+            });
+        };
         window.addEventListener('resize', this.handleResize);
     }
 

@@ -7,6 +7,7 @@ let todayGrid = null; // Alias for backward compatibility
 let isDragging = false;
 let justFinishedDragging = false;
 let isEditMode = false;
+let detailOverlayState = { placeholder: null, cardId: null };
 
 // Moon test mode
 window.lastMoonData = null;
@@ -70,8 +71,52 @@ function applyCardVisibility() {
     }
 }
 
+function restoreDetailToCard() {
+    const { placeholder } = detailOverlayState || {};
+    const $detail = $('#sunDetailBody .card-detail');
+    if (placeholder && $detail.length) {
+        $(placeholder).replaceWith($detail);
+        $detail.removeAttr('style');
+    }
+    detailOverlayState = { placeholder: null, cardId: null };
+    $('body').removeClass('sun-detail-active');
+    $('#sunDetailTitle').text('Expanded view');
+    $('#sunDetailSub').text('Select a card to see deeper context.');
+    $('#sunDetailBody').empty();
+}
+
+function showDetailOverlay($card) {
+    const $overlay = $('#sunDetailOverlay');
+    if (!$overlay.length) return;
+
+    const $detail = $card.find('.card-detail');
+    if ($detail.length) {
+        $detail.css({ opacity: 1, visibility: 'visible', transform: 'none' });
+        const placeholder = document.createComment('card-detail-placeholder');
+        $detail.after(placeholder);
+        detailOverlayState = { placeholder, cardId: $card.attr('id') };
+        $('#sunDetailBody').empty().append($detail);
+    } else {
+        $('#sunDetailBody').html('<p class="sun-detail-empty">No additional details available.</p>');
+    }
+
+    const title = $card.find('h3').first().text() || 'Details';
+    const kickerText =
+        $card.find('.kicker').first().text() ||
+        $card.find('.pill').first().text() ||
+        'Expanded view';
+
+    $('#sunDetailTitle').text(title);
+    $('#sunDetailSub').text(kickerText);
+    $('body').addClass('sun-detail-active');
+}
+
 // Card expansion handling
 function applyCardExpansion(newId) {
+    if (detailOverlayState.cardId && detailOverlayState.cardId !== newId) {
+        restoreDetailToCard();
+    }
+
     expandedCardId = newId;
     $('body').toggleClass('card-expanded', Boolean(newId));
 
@@ -92,58 +137,25 @@ function applyCardExpansion(newId) {
 
     const $cards = $('.card');
     const totalCards = $cards.length;
-    const dimmedCount = newId ? Math.max(totalCards - 1, 0) : 0;
-
-    // Scale blur intensity based on how many cards are being dimmed
-    const baseMinBlur = 0.25;
-    const baseMaxBlur = 6;
-    const baseBlurRange = 1000;
-    const blurDensityFactor = Math.min(dimmedCount / 8, 1); // assume 8+ dimmed cards is "crowded"
-    const intensityScale = 1 - blurDensityFactor * 0.45; // more dimmed cards -> lower intensity
-    const minBlur = baseMinBlur * intensityScale;
-    const maxBlur = (baseMaxBlur * intensityScale) + (baseMinBlur * (1 - intensityScale));
-    const blurRange = baseBlurRange * (1 + blurDensityFactor * 0.8); // widen range when many cards dimmed
 
     $cards.each(function () {
         const $card = $(this);
         const isExpanded = $card.attr('id') === newId;
         $card.toggleClass('expanded', isExpanded);
         $card.attr('aria-expanded', isExpanded ? 'true' : 'false');
-
-        // Apply distance-based blur
-        if (Boolean(newId) && !isExpanded && expandedCardCenter) {
-            // Calculate distance from this card to the expanded card
-            const offset = $card.offset();
-            const width = $card.outerWidth();
-            const height = $card.outerHeight();
-            const cardCenter = {
-                x: offset.left + width / 2,
-                y: offset.top + height / 2
-            };
-
-            // Calculate distances
-            const dx = Math.abs(cardCenter.x - expandedCardCenter.x);
-            const dy = Math.abs(cardCenter.y - expandedCardCenter.y);
-
-            // Weight vertical distance more heavily for the 2-column layout
-            // This ensures cards in the adjacent column at the same row get less blur
-            const verticalWeight = 2.5; // Increase to make vertical distance matter more
-            const weightedDistance = Math.sqrt(dx * dx + (dy * verticalWeight) * (dy * verticalWeight));
-
-            // Map distance to blur amount with an eased falloff so nearby cards stay crisp
-            const normalizedDistance = Math.min(1, weightedDistance / blurRange);
-            const easedDistance = Math.pow(normalizedDistance, 1.5); // slower start, faster end
-            const blurAmount = minBlur + (maxBlur - minBlur) * easedDistance;
-
-            // Apply the dynamic blur along with other dimming effects
-            $card.addClass('card-dimmed');
-            $card.css('filter', `blur(${blurAmount}px) saturate(80%)`);
-        } else {
-            // Remove dimming
-            $card.removeClass('card-dimmed');
-            $card.css('filter', '');
-        }
+        // Remove dimming from other cards to keep them fully interactive
+        $card.removeClass('card-dimmed');
+        $card.css('filter', '');
     });
+
+    if (newId) {
+        const $expanded = $(`#${newId}`);
+        if ($expanded.length) {
+            showDetailOverlay($expanded);
+        }
+    } else {
+        restoreDetailToCard();
+    }
 
     // Refresh Muuri layout after card expansion/collapse
     if (muuriGrid) {
@@ -351,13 +363,19 @@ function initCardHandlers() {
     });
 
     $(document).on('click', function (e) {
-        if (expandedCardId && !$(e.target).closest('.card').length) {
+        const clickedCard = $(e.target).closest('.card').length;
+        const clickedOverlay = $(e.target).closest('#sunDetailOverlay').length;
+        if (expandedCardId && !clickedCard && !clickedOverlay) {
             applyCardExpansion(null);
         }
     });
 
-    // Set up temperature toggle click handler on badge
-    $('#tempUnitBadge').on('click', function (e) {
+    $('#closeDetailOverlay').on('click', function () {
+        applyCardExpansion(null);
+    });
+
+    // Set up temperature toggle click handler on badge (using event delegation)
+    $panel.on('click', '#tempUnitBadge', function (e) {
         e.stopPropagation(); // Prevent card click events
 
         // Animate the card
@@ -371,23 +389,23 @@ function initCardHandlers() {
         toggleTemperatureUnit();
     });
 
-    // Set up day toggle badges for Sunrise, Sunset, Night, and Weather cards
-    $('#sunriseDayBadge').on('click', function (e) {
+    // Set up day toggle badges for Sunrise, Sunset, Night, and Weather cards (using event delegation)
+    $panel.on('click', '#sunriseDayBadge', function (e) {
         e.stopPropagation();
         toggleDayView('sunrise', $('#sunriseCard'));
     });
 
-    $('#sunsetDayBadge').on('click', function (e) {
+    $panel.on('click', '#sunsetDayBadge', function (e) {
         e.stopPropagation();
         toggleDayView('sunset', $('#sunsetCard'));
     });
 
-    $('#nightDayBadge').on('click', function (e) {
+    $panel.on('click', '#nightDayBadge', function (e) {
         e.stopPropagation();
         toggleDayView('night', $('#nightCard'));
     });
 
-    $('#weatherDayBadge').on('click', function (e) {
+    $panel.on('click', '#weatherDayBadge', function (e) {
         e.stopPropagation();
         toggleDayView('weather', $('#currentWeatherCard'));
     });

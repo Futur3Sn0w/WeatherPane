@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="css/css.css">
     <script>
         // Apply theme immediately to prevent flash of unstyled content
-        (function() {
+        (function () {
             const mode = localStorage.getItem('weatherPane:themeMode') || 'auto';
             const color = localStorage.getItem('weatherPane:themeColor') || 'blue';
             let effectiveMode = mode;
@@ -23,7 +23,7 @@
             document.documentElement.setAttribute('data-theme-mode', effectiveMode);
             document.documentElement.setAttribute('data-theme-color', color);
             // Also set on body when it's available
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 document.body.setAttribute('data-theme-mode', effectiveMode);
                 document.body.setAttribute('data-theme-color', color);
             });
@@ -46,587 +46,225 @@
     <div class="settings-modal" id="settingsModal">
         <div class="settings-content">
             <div class="settings-header">
-                <h2>Settings</h2>
+                <div>
+                    <p class="settings-kicker">Tweak your pane</p>
+                    <h2>Settings</h2>
+                </div>
                 <button class="close-btn" id="closeSettingsBtn" aria-label="Close settings">×</button>
             </div>
-            <div class="settings-tabs">
-                <button class="settings-tab active" data-tab="appearance">Appearance</button>
-                <button class="settings-tab" data-tab="background">Live Background</button>
-                <button class="settings-tab" data-tab="cards">Cards</button>
-                <div class="tab-indicator"></div>
-            </div>
             <div class="settings-body">
-                <div class="settings-tab-content active" id="appearanceTab">
-                    <div class="setting-item">
-                        <div>
-                            <span class="setting-label">Theme Mode</span>
-                            <span class="setting-description">Choose light, dark, or automatic based on system preferences</span>
+                <div class="settings-shell">
+                    <nav class="settings-nav" id="settingsNav" role="tablist" aria-label="Settings sections">
+                        <div class="settings-nav-scroll" id="settingsNavScroll">
+                            <div class="settings-nav-indicator" id="settingsNavIndicator"></div>
                         </div>
-                        <div class="segmented-control">
-                            <input type="radio" name="themeMode" id="themeModeAuto" value="auto" checked>
-                            <label for="themeModeAuto">Auto</label>
-                            <input type="radio" name="themeMode" id="themeModeLight" value="light">
-                            <label for="themeModeLight">Light</label>
-                            <input type="radio" name="themeMode" id="themeModeDark" value="dark">
-                            <label for="themeModeDark">Dark</label>
-                        </div>
+                    </nav>
+                    <div class="settings-panels" id="settingsPanels">
+                        <section class="settings-panel active" id="appearanceTab" data-tab-id="appearance"
+                            data-label="Appearance" data-icon="fa-palette">
+                            <div class="settings-panel-header">
+                                <p class="settings-panel-kicker">Look & feel</p>
+                                <h3>Appearance</h3>
+                                <p class="settings-panel-description">Switch themes and pick the accent used across the
+                                    app.</p>
+                            </div>
+                            <div class="setting-item surface">
+                                <div>
+                                    <span class="setting-label">Theme Mode</span>
+                                    <span class="setting-description">Choose light, dark, or automatic based on system
+                                        preferences</span>
+                                </div>
+                                <div class="segmented-control">
+                                    <input type="radio" name="themeMode" id="themeModeAuto" value="auto" checked>
+                                    <label for="themeModeAuto">Auto</label>
+                                    <input type="radio" name="themeMode" id="themeModeLight" value="light">
+                                    <label for="themeModeLight">Light</label>
+                                    <input type="radio" name="themeMode" id="themeModeDark" value="dark">
+                                    <label for="themeModeDark">Dark</label>
+                                </div>
+                            </div>
+                            <div class="setting-item surface">
+                                <div>
+                                    <span class="setting-label">Accent Color</span>
+                                    <span class="setting-description">Customize the color scheme of the interface</span>
+                                </div>
+                                <div class="color-picker">
+                                    <input type="radio" name="themeColor" id="colorBlue" value="blue" checked>
+                                    <label for="colorBlue" class="color-option" data-color="blue">
+                                        <span class="color-swatch"
+                                            style="background: linear-gradient(135deg, #4ea3ff 0%, #0b1320 100%)"></span>
+                                        <span class="color-name">Blue</span>
+                                    </label>
+                                    <input type="radio" name="themeColor" id="colorPurple" value="purple">
+                                    <label for="colorPurple" class="color-option" data-color="purple">
+                                        <span class="color-swatch"
+                                            style="background: linear-gradient(135deg, #a855f7 0%, #1a0d24 100%)"></span>
+                                        <span class="color-name">Purple</span>
+                                    </label>
+                                    <input type="radio" name="themeColor" id="colorPink" value="pink">
+                                    <label for="colorPink" class="color-option" data-color="pink">
+                                        <span class="color-swatch"
+                                            style="background: linear-gradient(135deg, #ec4899 0%, #240d1a 100%)"></span>
+                                        <span class="color-name">Pink</span>
+                                    </label>
+                                    <input type="radio" name="themeColor" id="colorGreen" value="green">
+                                    <label for="colorGreen" class="color-option" data-color="green">
+                                        <span class="color-swatch"
+                                            style="background: linear-gradient(135deg, #10b981 0%, #0a1f14 100%)"></span>
+                                        <span class="color-name">Green</span>
+                                    </label>
+                                    <input type="radio" name="themeColor" id="colorOrange" value="orange">
+                                    <label for="colorOrange" class="color-option" data-color="orange">
+                                        <span class="color-swatch"
+                                            style="background: linear-gradient(135deg, #f97316 0%, #241a0d 100%)"></span>
+                                        <span class="color-name">Orange</span>
+                                    </label>
+                                    <input type="radio" name="themeColor" id="colorTeal" value="teal">
+                                    <label for="colorTeal" class="color-option" data-color="teal">
+                                        <span class="color-swatch"
+                                            style="background: linear-gradient(135deg, #14b8a6 0%, #0d1f24 100%)"></span>
+                                        <span class="color-name">Teal</span>
+                                    </label>
+                                    <input type="radio" name="themeColor" id="colorGrey" value="grey">
+                                    <label for="colorGrey" class="color-option" data-color="grey">
+                                        <span class="color-swatch"
+                                            style="background: linear-gradient(135deg, #6b7280 0%, #0f1014 100%)"></span>
+                                        <span class="color-name">Grey</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="settings-panel" id="backgroundTab" data-tab-id="background"
+                            data-label="Live Background" data-icon="fa-mountain-sun">
+                            <div class="settings-panel-header">
+                                <p class="settings-panel-kicker">Atmosphere</p>
+                                <h3>Live Background</h3>
+                                <p class="settings-panel-description">Preview the animated canvas scenes and control how
+                                    they play.</p>
+                            </div>
+                            <div class="setting-item surface">
+                                <div class="background-preview-container">
+                                    <div class="background-preview" id="backgroundPreview">
+                                        <button class="preview-nav-btn prev" id="prevSceneBtn"
+                                            aria-label="Previous scene">
+                                            <i class="fa-solid fa-chevron-left"></i>
+                                        </button>
+                                        <button class="preview-nav-btn next" id="nextSceneBtn"
+                                            aria-label="Next scene">
+                                            <i class="fa-solid fa-chevron-right"></i>
+                                        </button>
+                                        <div class="preview-dots" id="previewDots"></div>
+                                    </div>
+                                    <div class="scene-info">
+                                        <span class="scene-info-icon" id="sceneInfoIcon">
+                                            <i class="fa-solid fa-wand-sparkles"></i>
+                                        </span>
+                                        <span class="scene-info-name" id="sceneInfoName">Automatic</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item surface">
+                                <div>
+                                    <span class="setting-label">Animation State</span>
+                                    <span class="setting-description">Control the background animation playback</span>
+                                </div>
+                                <div class="segmented-control">
+                                    <input type="radio" name="cloudState" id="cloudOn" value="on" checked>
+                                    <label for="cloudOn">On</label>
+                                    <input type="radio" name="cloudState" id="cloudPaused" value="paused">
+                                    <label for="cloudPaused">Paused</label>
+                                    <input type="radio" name="cloudState" id="cloudOff" value="off">
+                                    <label for="cloudOff">Off</label>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="settings-panel" id="cardsTab" data-tab-id="cards" data-label="Cards"
+                            data-icon="fa-layer-group">
+                            <div class="settings-panel-header">
+                                <p class="settings-panel-kicker">Dashboard</p>
+                                <h3>Cards</h3>
+                                <p class="settings-panel-description">Toggle visibility of cards in the grid.</p>
+                            </div>
+                            <div class="setting-item surface">
+                                <div id="cardList" class="card-list"></div>
+                            </div>
+                        </section>
                     </div>
-                    <div class="setting-item">
-                        <div>
-                            <span class="setting-label">Accent Color</span>
-                            <span class="setting-description">Customize the color scheme of the interface</span>
-                        </div>
-                        <div class="color-picker">
-                            <input type="radio" name="themeColor" id="colorBlue" value="blue" checked>
-                            <label for="colorBlue" class="color-option" data-color="blue">
-                                <span class="color-swatch" style="background: linear-gradient(135deg, #4ea3ff 0%, #0b1320 100%)"></span>
-                                <span class="color-name">Blue</span>
-                            </label>
-                            <input type="radio" name="themeColor" id="colorPurple" value="purple">
-                            <label for="colorPurple" class="color-option" data-color="purple">
-                                <span class="color-swatch" style="background: linear-gradient(135deg, #a855f7 0%, #1a0d24 100%)"></span>
-                                <span class="color-name">Purple</span>
-                            </label>
-                            <input type="radio" name="themeColor" id="colorPink" value="pink">
-                            <label for="colorPink" class="color-option" data-color="pink">
-                                <span class="color-swatch" style="background: linear-gradient(135deg, #ec4899 0%, #240d1a 100%)"></span>
-                                <span class="color-name">Pink</span>
-                            </label>
-                            <input type="radio" name="themeColor" id="colorGreen" value="green">
-                            <label for="colorGreen" class="color-option" data-color="green">
-                                <span class="color-swatch" style="background: linear-gradient(135deg, #10b981 0%, #0a1f14 100%)"></span>
-                                <span class="color-name">Green</span>
-                            </label>
-                            <input type="radio" name="themeColor" id="colorOrange" value="orange">
-                            <label for="colorOrange" class="color-option" data-color="orange">
-                                <span class="color-swatch" style="background: linear-gradient(135deg, #f97316 0%, #241a0d 100%)"></span>
-                                <span class="color-name">Orange</span>
-                            </label>
-                            <input type="radio" name="themeColor" id="colorTeal" value="teal">
-                            <label for="colorTeal" class="color-option" data-color="teal">
-                                <span class="color-swatch" style="background: linear-gradient(135deg, #14b8a6 0%, #0d1f24 100%)"></span>
-                                <span class="color-name">Teal</span>
-                            </label>
-                            <input type="radio" name="themeColor" id="colorGrey" value="grey">
-                            <label for="colorGrey" class="color-option" data-color="grey">
-                                <span class="color-swatch" style="background: linear-gradient(135deg, #6b7280 0%, #0f1014 100%)"></span>
-                                <span class="color-name">Grey</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-tab-content" id="backgroundTab">
-                    <div class="background-preview-container">
-                        <div class="background-preview" id="backgroundPreview">
-                            <button class="preview-nav-btn prev" id="prevSceneBtn" aria-label="Previous scene">
-                                <i class="fa-solid fa-chevron-left"></i>
-                            </button>
-                            <button class="preview-nav-btn next" id="nextSceneBtn" aria-label="Next scene">
-                                <i class="fa-solid fa-chevron-right"></i>
-                            </button>
-                            <div class="preview-dots" id="previewDots"></div>
-                        </div>
-                        <div class="scene-info">
-                            <span class="scene-info-icon" id="sceneInfoIcon">
-                                <i class="fa-solid fa-wand-sparkles"></i>
-                            </span>
-                            <span class="scene-info-name" id="sceneInfoName">Automatic</span>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div>
-                            <span class="setting-label">Animation State</span>
-                            <span class="setting-description">Control the background animation playback</span>
-                        </div>
-                        <div class="segmented-control">
-                            <input type="radio" name="cloudState" id="cloudOn" value="on" checked>
-                            <label for="cloudOn">On</label>
-                            <input type="radio" name="cloudState" id="cloudPaused" value="paused">
-                            <label for="cloudPaused">Paused</label>
-                            <input type="radio" name="cloudState" id="cloudOff" value="off">
-                            <label for="cloudOff">Off</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-tab-content" id="cardsTab">
-                    <div id="cardList" class="card-list"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <main>
-        <!-- Left pane: Sun position visualization -->
-        <section class="sun-viz" id="sunViz">
-            <div class="sun-viz-background" id="sunVizBackground"></div>
-            <div class="sun-viz-content">
-                <div class="current-time-display" id="currentTimeDisplay">12:00 AM</div>
-                <div class="solar-event-countdown" id="solarEventCountdown">
-                    <span class="event-name">Solar Noon</span>
-                    <span class="event-time">in 1 hour, 31 minutes</span>
-                </div>
-                <canvas id="sunCanvas"></canvas>
-                <div class="time-slider-container">
-                    <input type="range" id="timeSlider" min="0" max="1439" value="0" step="1">
-                    <div class="time-pill" id="timePill">
-                        <span class="time-text">12:00 AM</span>
-                        <button class="time-reset-btn" id="timeResetBtn" aria-label="Reset to current time">×</button>
+        <div class="content-rail">
+            <!-- Left pane: Sun position visualization -->
+            <section class="sun-viz" id="sunViz">
+                <div class="sun-viz-background" id="sunVizBackground"></div>
+                <div class="sun-viz-content">
+                    <div class="sun-viz-shell" id="sunVizShell">
+                        <div class="current-time-display" id="currentTimeDisplay">12:00 AM</div>
+                        <div class="solar-event-countdown" id="solarEventCountdown">
+                            <span class="event-name">Solar Noon</span>
+                            <span class="event-time">in 1 hour, 31 minutes</span>
+                        </div>
+                        <canvas id="sunCanvas"></canvas>
+                        <div class="time-slider-container">
+                            <div id="timeSlider" class="tick-slider"
+                                role="slider"
+                                tabindex="0"
+                                aria-label="Time of day slider, use arrow keys to adjust"
+                                aria-valuemin="0"
+                                aria-valuemax="1439"
+                                aria-valuenow="0"
+                                aria-valuetext="12:00 AM">
+                                <!-- Ticks will be generated dynamically by JavaScript -->
+                            </div>
+                            <div class="time-pill" id="timePill">
+                                <span class="time-text">12:00 AM</span>
+                                <button class="time-reset-btn" id="timeResetBtn" aria-label="Reset to current time">×</button>
+                            </div>
+                            <div class="solar-event-markers" id="solarEventMarkers">
+                                <div class="marker sunrise" id="markerSunrise"></div>
+                                <div class="marker noon" id="markerNoon"></div>
+                                <div class="marker sunset" id="markerSunset"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sun-detail-overlay" id="sunDetailOverlay" aria-live="polite">
+                        <div class="sun-detail-header">
+                            <div>
+                                <p class="eyebrow">Card details</p>
+                                <h3 id="sunDetailTitle">Expanded view</h3>
+                                <p class="sun-detail-sub" id="sunDetailSub">Select a card to see deeper context.</p>
+                            </div>
+                            <button class="sun-detail-close" id="closeDetailOverlay" aria-label="Close details and return to sun graph">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="sun-detail-body" id="sunDetailBody"></div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- Right pane: Info cards -->
-        <div id="panel">
-            <section class="grid" id="todayGrid">
-
-                <article class="card" id="solarNoonCard" data-card="solarNoon" tabindex="0" role="button"
-                    aria-expanded="false">
-                    <div class="card-summary">
-                        <h3>Solar Noon</h3>
-                        <div class="row">
-                            <div class="metric"><span class="value" id="solarNoon">—</span><small
-                                    id="solarNoonAmPm"></small>
-                            </div>
-                            <span class="pill" id="solarNoonDelta">—</span>
-                        </div>
-                        <div class="kicker" id="solarNoonSub">Calculating…</div>
-                    </div>
-                    <div class="card-detail">
-                        <div class="detail-grid">
-                            <div>
-                                <span class="detail-label">Sun altitude</span>
-                                <span class="detail-value" id="solarNoonAltitude">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Sun azimuth</span>
-                                <span class="detail-value" id="solarNoonAzimuth">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Offset from clock noon</span>
-                                <span class="detail-value" id="solarNoonOffset">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Daylight fraction</span>
-                                <span class="detail-value" id="solarNoonDayFraction">—</span>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="card" id="sunsetCard" data-card="sunset" tabindex="0" role="button"
-                    aria-expanded="false">
-                    <span class="status-badge day-toggle-badge" id="sunsetDayBadge">TOD</span>
-                    <div class="card-summary">
-                        <h3>Sunset</h3>
-                        <div class="sunset-today-data">
-                            <div class="row">
-                                <div class="metric"><span class="value" id="sunset">—</span><small id="sunsetAmPm"></small>
-                                </div>
-                                <span class="pill" style="background:var(--accent-2)" id="dayLeft">—</span>
-                            </div>
-                            <div class="kicker" id="sunsetSub">—</div>
-                        </div>
-                        <div class="sunset-tomorrow-data" style="display: none;">
-                            <div class="row">
-                                <div class="metric"><span class="value" id="sunsetTomorrow">—</span><small
-                                        id="sunsetTomorrowAmPm"></small></div>
-                                <span class="pill" style="background:var(--accent-2)" id="sunsetTomorrowDelta">—</span>
-                            </div>
-                            <div class="kicker" id="sunsetTomorrowSub">—</div>
-                        </div>
-                    </div>
-                    <div class="card-detail">
-                        <div class="sunset-today-data">
-                            <div class="detail-grid">
-                                <div>
-                                    <span class="detail-label">Civil dusk</span>
-                                    <span class="detail-value" id="sunsetCivilDusk">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Nautical dusk</span>
-                                    <span class="detail-value" id="sunsetNauticalDusk">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Astronomical dusk</span>
-                                    <span class="detail-value" id="sunsetAstronomicalDusk">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Golden hour ends</span>
-                                    <span class="detail-value" id="sunsetGoldenHourEnd">—</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="sunset-tomorrow-data" style="display: none;">
-                            <div class="detail-grid">
-                                <div>
-                                    <span class="detail-label">Civil dusk</span>
-                                    <span class="detail-value" id="sunsetTomorrowCivilDusk">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Nautical dusk</span>
-                                    <span class="detail-value" id="sunsetTomorrowNauticalDusk">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Astronomical dusk</span>
-                                    <span class="detail-value" id="sunsetTomorrowAstronomicalDusk">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Golden hour ends</span>
-                                    <span class="detail-value" id="sunsetTomorrowGoldenHourEnd">—</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="card" id="nightCard" data-card="night" tabindex="0" role="button" aria-expanded="false">
-                    <span class="status-badge day-toggle-badge" id="nightDayBadge">TOD</span>
-                    <div class="card-summary">
-                        <h3>Night Start</h3>
-                        <div class="night-today-data">
-                            <div class="row">
-                                <div class="metric"><span class="value" id="nightStart">—</span><small
-                                        id="nightAmPm"></small></div>
-                                <span class="pill" style="background:var(--accent-3)">After dusk</span>
-                            </div>
-                            <div class="kicker" id="nightSub">Civil → Nautical → Astronomical</div>
-                        </div>
-                        <div class="night-tomorrow-data" style="display: none;">
-                            <div class="row">
-                                <div class="metric"><span class="value" id="nightStartTomorrow">—</span><small
-                                        id="nightTomorrowAmPm"></small></div>
-                                <span class="pill" style="background:var(--accent-3)">After dusk</span>
-                            </div>
-                            <div class="kicker" id="nightTomorrowSub">Civil → Nautical → Astronomical</div>
-                        </div>
-                    </div>
-                    <div class="card-detail">
-                        <div class="night-today-data">
-                            <div class="detail-grid">
-                                <div>
-                                    <span class="detail-label">Astronomical dusk</span>
-                                    <span class="detail-value" id="nightAstronomicalDusk">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Astronomical dawn</span>
-                                    <span class="detail-value" id="nightAstronomicalDawn">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Length of night</span>
-                                    <span class="detail-value" id="nightLength">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Moon overlap</span>
-                                    <span class="detail-value" id="nightMoonOverlap">—</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="night-tomorrow-data" style="display: none;">
-                            <div class="detail-grid">
-                                <div>
-                                    <span class="detail-label">Astronomical dusk</span>
-                                    <span class="detail-value" id="nightTomorrowAstronomicalDusk">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Astronomical dawn</span>
-                                    <span class="detail-value" id="nightTomorrowAstronomicalDawn">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Length of night</span>
-                                    <span class="detail-value" id="nightTomorrowLength">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Moon overlap</span>
-                                    <span class="detail-value" id="nightTomorrowMoonOverlap">—</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="card" id="moonCard" data-card="moon" tabindex="0" role="button" aria-expanded="false">
-                    <span class="status-badge moon-test-badge" id="moonTestBadge" title="Test moon phases"><i
-                            class="fa-solid fa-chevron-down"></i></span>
-                    <div class="card-summary">
-                        <h3>Moon</h3>
-                        <div class="moon">
-                            <svg class="icon" viewBox="0 0 100 100" aria-hidden="true">
-                                <defs>
-                                    <radialGradient id="moonGradient" cx="36%" cy="40%">
-                                        <stop offset="0%" stop-color="#fff" />
-                                        <stop offset="50%" stop-color="#e6e9ef" />
-                                        <stop offset="60%" stop-color="#cfd6e4" />
-                                        <stop offset="100%" stop-color="#8895aa" />
-                                    </radialGradient>
-                                </defs>
-                                <circle cx="50" cy="50" r="44" fill="url(#moonGradient)" id="moonSurface" />
-                                <path id="moonShadow" fill="rgba(10, 10, 20, 0.95)" />
-                            </svg>
-                            <div>
-                                <div class="label" id="moonPhaseLabel">—</div>
-                                <div class="kicker" id="moonRiseSet">—</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-detail">
-                        <div class="detail-grid">
-                            <div>
-                                <span class="detail-label">Illumination</span>
-                                <span class="detail-value" id="moonIllumination">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Phase angle</span>
-                                <span class="detail-value" id="moonPhaseAngle">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Altitude</span>
-                                <span class="detail-value" id="moonAltitude">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Distance</span>
-                                <span class="detail-value" id="moonDistance">—</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="moon-test-slider" id="moonTestSlider">
-                        <label for="moonPhaseSlider" class="moon-slider-label">
-                            <span id="moonSliderPhaseName">Half Moon</span>
-                            <span class="moon-slider-value" id="moonSliderValue">50%</span>
-                        </label>
-                        <div class="moon-slider-next" id="moonSliderNext">Next occurs: —</div>
-                        <input type="range" id="moonPhaseSlider" min="0" max="100" value="50" step="1">
-                    </div>
-                </article>
-
-                <article class="card" id="astronomicalEventsCard" data-card="astronomicalEvents" tabindex="0" role="button"
-                    aria-expanded="false">
-                    <div class="card-summary">
-                        <h3>Astronomical Events</h3>
-                        <div class="metric"><span class="value" id="astroEventName">—</span></div>
-                        <div class="kicker" id="astroEventDate">Calculating…</div>
-                    </div>
-                    <div class="card-detail">
-                        <div class="detail-grid">
-                            <div>
-                                <span class="detail-label">Event type</span>
-                                <span class="detail-value" id="astroEventType">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Date & time</span>
-                                <span class="detail-value" id="astroEventDateTime">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Visibility</span>
-                                <span class="detail-value" id="astroEventVisibility">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Next event</span>
-                                <span class="detail-value" id="astroNextEvent">—</span>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="card" id="dayProgressCard" data-card="daylight" tabindex="0" role="button"
-                    aria-expanded="false">
-                    <div class="card-summary">
-                        <h3>Daylight</h3>
-                        <div class="bar" aria-label="Day progress">
-                            <div class="fill" id="dayFill"></div>
-                        </div>
-                        <div class="kicker" style="margin-top:10px; text-align: center;" id="daylightInfo">—</div>
-                    </div>
-                    <div class="card-detail">
-                        <div class="detail-grid">
-                            <div>
-                                <span class="detail-label">First light (dawn)</span>
-                                <span class="detail-value" id="daylightDawn">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Last light (dusk)</span>
-                                <span class="detail-value" id="daylightDusk">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Golden hour</span>
-                                <span class="detail-value" id="daylightGoldenHour">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Sun above horizon</span>
-                                <span class="detail-value" id="daylightAboveHorizon">—</span>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="card" id="seasonCard" data-card="season" tabindex="0" role="button"
-                    aria-expanded="false">
-                    <div class="card-summary">
-                        <h3>Season</h3>
-                        <div class="season-display">
-                            <div class="season-info">
-                                <div class="season-name" id="seasonNow">—</div>
-                                <div class="season-subtitle" id="seasonEndsIn">—</div>
-                            </div>
-                            <div class="season-icon" id="seasonIcon" aria-hidden="true"></div>
-                        </div>
-                        <div class="season-footer">
-                            <span class="season-range" id="seasonRange">—</span>
-                            <span class="season-location" id="seasonLocation">—</span>
-                        </div>
-                    </div>
-                    <div class="card-detail">
-                        <div class="detail-grid">
-                            <div>
-                                <span class="detail-label">Next Event</span>
-                                <span class="detail-value" id="seasonNext">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Days until event</span>
-                                <span class="detail-value" id="seasonDaysUntil">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Event date</span>
-                                <span class="detail-value" id="seasonEventDate">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Days since previous</span>
-                                <span class="detail-value" id="seasonSincePrev">—</span>
-                            </div>
-                            <div>
-                                <span class="detail-label">Approx hemisphere</span>
-                                <span class="detail-value" id="seasonHemisphere">—</span>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="card" id="sunriseCard" data-card="sunrise" tabindex="0" role="button"
-                    aria-expanded="false">
-                    <span class="status-badge day-toggle-badge" id="sunriseDayBadge">TOD</span>
-                    <div class="card-summary">
-                        <h3>Sunrise</h3>
-                        <div class="sunrise-today-data">
-                            <div class="metric"><span class="value" id="sunriseToday">—</span><small
-                                    id="sunriseTodayAmPm"></small>
-                            </div>
-                            <div class="kicker" id="sunriseTodaySub">—</div>
-                        </div>
-                        <div class="sunrise-tomorrow-data" style="display: none;">
-                            <div class="metric"><span class="value" id="sunriseTomorrow">—</span><small
-                                    id="sunriseAmPm"></small>
-                            </div>
-                            <div class="kicker" id="sunriseSub">—</div>
-                        </div>
-                    </div>
-                    <div class="card-detail">
-                        <div class="sunrise-today-data">
-                            <div class="detail-grid">
-                                <div>
-                                    <span class="detail-label">Civil dawn</span>
-                                    <span class="detail-value" id="sunriseTodayCivilDawn">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Nautical dawn</span>
-                                    <span class="detail-value" id="sunriseTodayNauticalDawn">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Astronomical dawn</span>
-                                    <span class="detail-value" id="sunriseTodayAstronomicalDawn">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Golden hour starts</span>
-                                    <span class="detail-value" id="sunriseTodayGoldenHourStart">—</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="sunrise-tomorrow-data" style="display: none;">
-                            <div class="detail-grid">
-                                <div>
-                                    <span class="detail-label">Civil dawn</span>
-                                    <span class="detail-value" id="sunriseCivilDawn">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Nautical dawn</span>
-                                    <span class="detail-value" id="sunriseNauticalDawn">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Daylight gain</span>
-                                    <span class="detail-value" id="sunriseGain">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Next solar noon</span>
-                                    <span class="detail-value" id="sunriseNextNoon">—</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="card" id="currentWeatherCard" data-card="currentWeather" tabindex="0" role="button"
-                    aria-expanded="false">
-                    <span class="status-badge day-toggle-badge" id="weatherDayBadge">TOD</span>
-                    <span class="status-badge temp-unit-badge" id="tempUnitBadge">°C</span>
-                    <div class="card-summary">
-                        <h3>Weather</h3>
-                        <div class="weather-today-data">
-                            <div class="row">
-                                <div class="metric"><span class="value" id="temp">—</span><small>°</small></div>
-                                <div class="kicker" id="nowMeta">—</div>
-                            </div>
-                        </div>
-                        <div class="weather-tomorrow-data" style="display: none;">
-                            <div class="row">
-                                <div class="metric"><span class="value" id="tempTomorrow">—</span><small>°</small></div>
-                                <div class="kicker" id="tomorrowMeta">—</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-detail">
-                        <div class="weather-today-data">
-                            <div class="detail-grid">
-                                <div>
-                                    <span class="detail-label">Conditions</span>
-                                    <span class="detail-value" id="nowConditions">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Wind / Gusts</span>
-                                    <span class="detail-value" id="nowWind">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Humidity</span>
-                                    <span class="detail-value" id="nowHumidity">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Feels like</span>
-                                    <span class="detail-value" id="nowFeelsLike">—</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="weather-tomorrow-data" style="display: none;">
-                            <div class="detail-grid">
-                                <div>
-                                    <span class="detail-label">High / Low</span>
-                                    <span class="detail-value" id="tomorrowHighLow">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Precipitation</span>
-                                    <span class="detail-value" id="tomorrowPrecip">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Wind / Gusts</span>
-                                    <span class="detail-value" id="tomorrowWind">—</span>
-                                </div>
-                                <div>
-                                    <span class="detail-label">Daylight</span>
-                                    <span class="detail-value" id="tomorrowDaylight">—</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-
             </section>
+
+            <!-- Right pane: Info cards -->
+            <div id="panel">
+                <div class="panel-intro">
+                    <p class="eyebrow">Daily briefing</p>
+                    <div class="panel-intro-row">
+                        <div>
+                            <h2>Today at a glance</h2>
+                            <p class="panel-intro-sub">Live conditions, solar milestones, and upcoming sky events tuned to your coordinates.</p>
+                        </div>
+                        <div class="pill-group" aria-hidden="true">
+                            <span class="pill accent">Live data</span>
+                            <span class="pill outline">Drag to reorder cards</span>
+                        </div>
+                    </div>
+                </div>
+                <section class="grid" id="todayGrid">
+
+                </section>
+            </div>
         </div>
     </main>
 
@@ -657,6 +295,7 @@
     <script src="js/scene-manager.js"></script>
     <script src="js/solar-visualization.js"></script>
     <script src="js/settings.js"></script>
+    <script src="js/card-renderer.js"></script>
     <script src="js/grid.js"></script>
     <script src="js/main.js"></script>
 </body>
