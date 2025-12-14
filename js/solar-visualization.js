@@ -406,19 +406,41 @@ class SunVisualization {
     }
 
     startAutoUpdate() {
-        // Update every minute
+        // Update every second for smooth realtime advancement
         setInterval(() => {
-            if (!this.isUserInteracting) {
+            if (!this.isUserInteracting && !this.isAnimating) {
                 const now = new Date();
                 const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
                 // Only auto-update if slider is at current time (within 1 minute)
                 if (Math.abs(this.currentMinutes - currentMinutes) <= 1) {
-                    this.resetToCurrentTime();
-                    console.log('[SunViz] Auto-updated to current time');
+                    // Update to exact current time (including seconds)
+                    this.currentMinutes = currentMinutes;
+                    this.displayTime = new Date(now);
+
+                    const timeStr = fmt(this.displayTime).t + ' ' + fmt(this.displayTime).am;
+
+                    // Update pill position and text
+                    const percent = currentMinutes / 1439;
+                    this.setSliderPosition(percent);
+                    this.timeText.textContent = timeStr;
+                    this.timeDisplay.textContent = timeStr;
+
+                    // Update ARIA attributes
+                    this.slider.setAttribute('aria-valuenow', currentMinutes);
+                    this.slider.setAttribute('aria-valuetext', timeStr);
+
+                    // Keep pill hidden when at current time
+                    this.updatePillVisibility();
+
+                    // Update solar event countdown
+                    this.updateSolarEventCountdown();
+
+                    // Update tick states
+                    this.updateTickStates();
                 }
             }
-        }, 60000); // Every 60 seconds
+        }, 1000); // Every 1 second for smooth realtime updates
     }
 
     setSunTimes(sunrise, sunset, times, lat, lon) {
