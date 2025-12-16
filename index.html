@@ -186,6 +186,34 @@
                                     banner.</p>
                             </div>
 
+                            <!-- Master Toggle -->
+                            <div class="setting-item surface">
+                                <div class="setting-row">
+                                    <div>
+                                        <span class="setting-label">Enable Daily Brief</span>
+                                        <span class="setting-description">Show or hide the entire banner</span>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="enableDailyBrief" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Banner Position -->
+                            <div class="setting-item surface">
+                                <div>
+                                    <span class="setting-label">Banner Position</span>
+                                    <span class="setting-description">Place the banner at the top or bottom of the page</span>
+                                </div>
+                                <div class="segmented-control">
+                                    <input type="radio" name="bannerPosition" id="bannerPositionTop" value="top" checked>
+                                    <label for="bannerPositionTop">Top</label>
+                                    <input type="radio" name="bannerPosition" id="bannerPositionBottom" value="bottom">
+                                    <label for="bannerPositionBottom">Bottom</label>
+                                </div>
+                            </div>
+
                             <!-- Banner Layout -->
                             <div class="setting-item surface">
                                 <div>
@@ -343,7 +371,7 @@
 
             <!-- Right pane: Info cards -->
             <div id="panel">
-                <div class="panel-intro split-banner layout-full">
+                <div class="panel-intro split-banner layout-full banner-position-top">
                     <div class="banner-left">
                         <p class="eyebrow">Daily briefing</p>
                         <h2>Today at a glance</h2>

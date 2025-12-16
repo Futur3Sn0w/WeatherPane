@@ -730,12 +730,20 @@ function adjustGridContainerWidth() {
     const minColumns = 1;
     const maxColumns = 5;
 
-    // Calculate available width based on viewport, accounting for typical layout constraints
-    // Use viewport width minus reasonable margins/padding for the panel
     const viewportWidth = window.innerWidth;
-    const sunVizEstimatedWidth = Math.min(600, viewportWidth * 0.4); // Sun viz typically takes up to 40% or 600px
-    const layoutPadding = 100; // Account for padding, margins, gaps in the layout
-    const availableWidth = Math.max(viewportWidth - sunVizEstimatedWidth - layoutPadding, viewportWidth * 0.5);
+
+    // Calculate space needed for sun viz and layout spacing
+    // Sun viz takes fixed width on left side (max 400px from grid-template-columns)
+    const sunVizWidth = 400;
+    const contentRailGap = parseInt(styles.getPropertyValue('--space-7')) || 48; // gap between columns
+    const mainPadding = parseInt(styles.getPropertyValue('--space-4')) || 16; // main padding
+    const panelPaddingLeft = 20;
+    const panelPaddingRight = parseInt(styles.getPropertyValue('--space-4')) || 16;
+    const scrollbarWidth = 15; // Reserve space for scrollbar
+
+    // Calculate space available for cards after accounting for all layout elements
+    const layoutOverhead = sunVizWidth + contentRailGap + (mainPadding * 2) + panelPaddingLeft + panelPaddingRight + scrollbarWidth;
+    const availableWidth = viewportWidth - layoutOverhead;
 
     const cardOuter = cardWidth + margin * 2; // card width + margins
 
@@ -757,16 +765,15 @@ function adjustGridContainerWidth() {
     // Update global `--maxw` to allow main/header to expand for more columns
     (function updateMaxWidth() {
         const docEl = document.documentElement;
-        const layoutInset = 0; // horizontal padding/margins in main layout
         const minMax = 800; // minimum max width to avoid too narrow layout
-        const maxCap = 2200; // generous cap for very wide screens
+        const maxCap = 2400; // generous cap for very wide screens
 
-        // Calculate desired max width: container + sun viz + spacing
-        const sunVizWidth = Math.min(600, viewportWidth * 0.4);
-        const desiredMaxWidth = containerWidth + sunVizWidth + layoutInset;
+        // Calculate desired max width to fit all columns
+        // This is the full width needed: sun viz + gap + cards + padding
+        const desiredMaxWidth = layoutOverhead + containerWidth;
 
-        // Clamp to reasonable bounds
-        const finalMaxWidth = Math.min(maxCap, Math.max(minMax, desiredMaxWidth));
+        // Clamp to reasonable bounds, but prefer viewport width if it fits
+        const finalMaxWidth = Math.min(maxCap, Math.max(minMax, Math.min(desiredMaxWidth, viewportWidth - 32)));
         docEl.style.setProperty('--maxw', finalMaxWidth + 'px');
     })();
 

@@ -60,6 +60,23 @@ function applyTheme() {
 }
 
 // Daily Brief settings management
+function getBannerEnabled() {
+    const value = localStorage.getItem('weatherPane:bannerEnabled');
+    return value === null ? true : value === 'true';
+}
+
+function setBannerEnabled(enabled) {
+    localStorage.setItem('weatherPane:bannerEnabled', enabled.toString());
+}
+
+function getBannerPosition() {
+    return localStorage.getItem('weatherPane:bannerPosition') || 'top';
+}
+
+function setBannerPosition(position) {
+    localStorage.setItem('weatherPane:bannerPosition', position);
+}
+
 function getBannerLayout() {
     return localStorage.getItem('weatherPane:bannerLayout') || 'full';
 }
@@ -107,12 +124,33 @@ function setSummaryContentSetting(key, value) {
 }
 
 function applyBannerSettings() {
+    const enabled = getBannerEnabled();
+    const position = getBannerPosition();
     const layout = getBannerLayout();
     const progressIndicator = getProgressIndicator();
     const enableRotation = getEnableCarouselRotation();
 
-    // Apply layout classes to banner
     const $splitBanner = $('.split-banner');
+    const $todayGrid = $('#todayGrid');
+
+    // Apply enabled/disabled state
+    $splitBanner.removeClass('banner-disabled banner-position-top banner-position-bottom');
+    $todayGrid.removeClass('grid-padding-top grid-padding-bottom');
+
+    if (!enabled) {
+        $splitBanner.addClass('banner-disabled');
+    } else {
+        // Apply position
+        if (position === 'bottom') {
+            $splitBanner.addClass('banner-position-bottom');
+            $todayGrid.addClass('grid-padding-bottom');
+        } else {
+            $splitBanner.addClass('banner-position-top');
+            $todayGrid.addClass('grid-padding-top');
+        }
+    }
+
+    // Apply layout classes to banner
     $splitBanner.removeClass('layout-full layout-summary-only layout-carousel-only');
 
     if (layout === 'summaryOnly') {
@@ -171,7 +209,7 @@ function applyBannerSettings() {
         window.updateBannerSummary();
     }
 
-    console.log('[Settings] Applied banner settings:', { layout, progressIndicator, enableRotation, interval: getRotationInterval() });
+    console.log('[Settings] Applied banner settings:', { enabled, position, layout, progressIndicator, enableRotation, interval: getRotationInterval() });
 }
 
 // Background preview functions
@@ -397,6 +435,9 @@ function initSettings() {
     const $settingsNavIndicator = $('#settingsNavIndicator');
 
     // Daily Brief settings elements
+    const $enableDailyBrief = $('#enableDailyBrief');
+    const $bannerPositionTop = $('#bannerPositionTop');
+    const $bannerPositionBottom = $('#bannerPositionBottom');
     const $bannerLayoutFull = $('#bannerLayoutFull');
     const $bannerLayoutSummaryOnly = $('#bannerLayoutSummaryOnly');
     const $bannerLayoutCarouselOnly = $('#bannerLayoutCarouselOnly');
@@ -465,6 +506,15 @@ function initSettings() {
     }
 
     // Load saved Daily Brief settings
+    $enableDailyBrief.prop('checked', getBannerEnabled());
+
+    const savedBannerPosition = getBannerPosition();
+    if (savedBannerPosition === 'bottom') {
+        $bannerPositionBottom.prop('checked', true);
+    } else {
+        $bannerPositionTop.prop('checked', true);
+    }
+
     const savedBannerLayout = getBannerLayout();
     if (savedBannerLayout === 'summaryOnly') {
         $bannerLayoutSummaryOnly.prop('checked', true);
@@ -587,6 +637,23 @@ function initSettings() {
         $radio.on('change', handleThemeColorChange);
     });
 
+    // Handle Daily Brief enable/disable
+    $enableDailyBrief.on('change', function() {
+        const isChecked = $(this).is(':checked');
+        setBannerEnabled(isChecked);
+        applyBannerSettings();
+    });
+
+    // Handle banner position changes
+    const handleBannerPositionChange = (e) => {
+        const value = $(e.target).val();
+        setBannerPosition(value);
+        applyBannerSettings();
+    };
+
+    $bannerPositionTop.on('change', handleBannerPositionChange);
+    $bannerPositionBottom.on('change', handleBannerPositionChange);
+
     // Handle Daily Brief banner layout changes
     const handleBannerLayoutChange = (e) => {
         const value = $(e.target).val();
@@ -665,19 +732,22 @@ function populateCardList() {
     const $cardList = $('#cardList');
     if (!$cardList.length) return;
 
-    // Get all cards with their titles
+    // Get all cards with their titles from the grid only (exclude carousel cards)
     const cards = [];
-    $('.card').each(function() {
+    $('#todayGrid > .card:not(.carousel-card-content)').each(function() {
         const $card = $(this);
         const cardId = $card.attr('id');
         const cardTitle = $card.find('h3').first().text() || 'Untitled Card';
         const dataCard = $card.attr('data-card');
 
-        cards.push({
-            id: cardId,
-            title: cardTitle,
-            dataCard: dataCard
-        });
+        // Only add cards with valid IDs to avoid duplicates
+        if (cardId && !cards.find(c => c.id === cardId)) {
+            cards.push({
+                id: cardId,
+                title: cardTitle,
+                dataCard: dataCard
+            });
+        }
     });
 
     // Sort cards by title
